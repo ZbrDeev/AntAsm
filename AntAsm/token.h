@@ -5,8 +5,6 @@
 
 enum TokenType {
   Comma,
-  Operator,
-  Sign,
   SemiColon,
   Identifier,
   Opcode,
@@ -14,7 +12,6 @@ enum TokenType {
   LiteralString,
   LiteralNumber,
   LiteralHex,
-  Unknow
 };
 
 struct Token {

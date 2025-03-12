@@ -105,38 +105,27 @@ void lexePart(const unsigned int position, const unsigned int keyword_size,
 
   keyword_char[keyword_size] = '\0';
 
-  if (OPCODE_CMP(keyword_char)) {
-    struct Token token;
-    token.type = Opcode;
+  struct Token token;
 
-    array->tokens = (struct Token *)realloc(
-        array->tokens, (array->size + 1) * sizeof(struct Token));
-    array->tokens[array->size++] = token;
+  if (OPCODE_CMP(keyword_char)) {
+    token.type = Opcode;
   } else if (REGISTER_CMP(keyword_char)) {
-    struct Token token;
     token.type = Register;
     token.value = keyword_char;
-
-    array->tokens = (struct Token *)realloc(
-        array->tokens, (array->size + 1) * sizeof(struct Token));
-    array->tokens[array->size++] = token;
   } else if (keyword_char[0] == '0' && keyword_char[1] == 'x') {
-    struct Token token;
     token.type = LiteralHex;
     token.value = keyword_char;
-
-    array->tokens = (struct Token *)realloc(
-        array->tokens, (array->size + 1) * sizeof(struct Token));
-    array->tokens[array->size++] = token;
   } else if (isNumber(keyword_char)) {
-    struct Token token;
     token.type = LiteralNumber;
     token.value = keyword_char;
-
-    array->tokens = (struct Token *)realloc(
-        array->tokens, (array->size + 1) * sizeof(struct Token));
-    array->tokens[array->size++] = token;
+  } else {
+    token.type = Identifier;
+    token.value = keyword_char;
   }
+
+  array->tokens = (struct Token *)realloc(
+      array->tokens, (array->size + 1) * sizeof(struct Token));
+  array->tokens[array->size++] = token;
 }
 
 bool isNumber(const char *number) {
