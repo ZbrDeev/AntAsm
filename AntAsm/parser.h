@@ -10,6 +10,11 @@ enum ValueType literalToValue(enum TokenType token_type);
 
 struct Program parse(const struct TokenArray *token_array);
 
+struct LabelMember parseLabel(const struct TokenArray *token_array, size_t *i);
+
+struct OperationMember
+parseOperationMember(const struct TokenArray *token_array, size_t *i);
+
 void parseOnlyDestOperation(const struct TokenArray *token_array, size_t i,
                             struct OperationMember *operation_member);
 

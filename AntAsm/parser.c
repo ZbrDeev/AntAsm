@@ -90,55 +90,83 @@ enum ValueType literalToValue(enum TokenType token_type) {
 
 struct Program parse(const struct TokenArray *token_array) {
   struct Program ast;
-  ast.member_list =
-      (struct OperationMember *)malloc(sizeof(struct OperationMember));
+  ast.member_list = (union MemberList *)malloc(sizeof(union MemberList));
 
   for (size_t i = 0; i < token_array->size; ++i) {
-    struct OperationMember operation_member;
     struct Token token = token_array->tokens[i];
 
-    if (token.type != Opcode) {
+    ast.member_list = (union MemberList *)realloc(
+        ast.member_list, (ast.size + 1) * sizeof(struct OperationMember));
+
+    if (token.type == Opcode) {
+      ast.member_list[ast.size].operation_member =
+          parseOperationMember(token_array, &i);
+    } else if (token.type == Identifier) {
+      ast.member_list[ast.size].label_member = parseLabel(token_array, &i);
+    } else {
       // TODO: HANDLE ERROR
     }
 
-    ast.member_list = realloc(ast.member_list,
-                              (ast.size + 1) * sizeof(struct OperationMember));
-
-    operation_member.operation_type = stringToOperationType(token.value);
-
-    ++i;
-
-    if (operation_member.operation_type == Jmp ||
-        operation_member.operation_type == Push ||
-        operation_member.operation_type == Pop ||
-        operation_member.operation_type == Inc ||
-        operation_member.operation_type == Dec ||
-        operation_member.operation_type == Jo ||
-        operation_member.operation_type == Jno ||
-        operation_member.operation_type == Jb ||
-        operation_member.operation_type == Jnb ||
-        operation_member.operation_type == Jz ||
-        operation_member.operation_type == Jnz ||
-        operation_member.operation_type == Jbe ||
-        operation_member.operation_type == Ja ||
-        operation_member.operation_type == Js ||
-        operation_member.operation_type == Jns ||
-        operation_member.operation_type == Jp ||
-        operation_member.operation_type == Jnp ||
-        operation_member.operation_type == Jl ||
-        operation_member.operation_type == Jnl ||
-        operation_member.operation_type == Jle ||
-        operation_member.operation_type == Jnle) {
-      parseOnlyDestOperation(token_array, i, &operation_member);
-    } else {
-      parseSrcDestOperation(token_array, &i, &operation_member);
-    }
-
-    ast.member_list[ast.size] = operation_member;
     ++ast.size;
   }
 
   return ast;
+}
+
+struct LabelMember parseLabel(const struct TokenArray *token_array, size_t *i) {
+  struct LabelMember label_member;
+
+  label_member.label_name = token_array->tokens[*i++].value;
+
+  if (token_array->tokens[*i++].type != SemiColon) {
+    // TODO: HANDLE ERROR
+  }
+
+  if (token_array->tokens[*i].type != Opcode) {
+    // TODO: HANDLE ERROR
+  }
+
+  label_member.operation_member = parseOperationMember(token_array, i);
+
+  return label_member;
+}
+
+struct OperationMember
+parseOperationMember(const struct TokenArray *token_array, size_t *i) {
+  struct OperationMember operation_member;
+
+  operation_member.operation_type =
+      stringToOperationType(token_array->tokens[*i].value);
+
+  ++*i;
+
+  if (operation_member.operation_type == Jmp ||
+      operation_member.operation_type == Push ||
+      operation_member.operation_type == Pop ||
+      operation_member.operation_type == Inc ||
+      operation_member.operation_type == Dec ||
+      operation_member.operation_type == Jo ||
+      operation_member.operation_type == Jno ||
+      operation_member.operation_type == Jb ||
+      operation_member.operation_type == Jnb ||
+      operation_member.operation_type == Jz ||
+      operation_member.operation_type == Jnz ||
+      operation_member.operation_type == Jbe ||
+      operation_member.operation_type == Ja ||
+      operation_member.operation_type == Js ||
+      operation_member.operation_type == Jns ||
+      operation_member.operation_type == Jp ||
+      operation_member.operation_type == Jnp ||
+      operation_member.operation_type == Jl ||
+      operation_member.operation_type == Jnl ||
+      operation_member.operation_type == Jle ||
+      operation_member.operation_type == Jnle) {
+    parseOnlyDestOperation(token_array, *i, &operation_member);
+  } else {
+    parseSrcDestOperation(token_array, i, &operation_member);
+  }
+
+  return operation_member;
 }
 
 void parseOnlyDestOperation(const struct TokenArray *token_array, size_t i,

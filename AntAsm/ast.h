@@ -67,10 +67,21 @@ struct OperationMember {
   struct SourceLocation *location;
 };
 
+struct LabelMember {
+  const char *label_name;
+
+  struct OperationMember operation_member;
+};
+
+union MemberList {
+  struct OperationMember operation_member;
+  struct LabelMember label_member;
+};
+
 struct Program {
   unsigned int size;
 
-  struct OperationMember *member_list;
+  union MemberList *member_list;
 };
 
 #endif // AST_H
