@@ -90,19 +90,22 @@ enum ValueType literalToValue(enum TokenType token_type) {
 
 struct Program parse(const struct TokenArray *token_array) {
   struct Program ast;
-  ast.member_list = (union MemberList *)malloc(sizeof(union MemberList));
+  ast.member_list = (struct MemberList *)malloc(sizeof(struct MemberList));
 
   for (size_t i = 0; i < token_array->size; ++i) {
     struct Token token = token_array->tokens[i];
 
-    ast.member_list = (union MemberList *)realloc(
+    ast.member_list = (struct MemberList *)realloc(
         ast.member_list, (ast.size + 1) * sizeof(struct OperationMember));
 
     if (token.type == Opcode) {
-      ast.member_list[ast.size].operation_member =
+      ast.member_list[ast.size].member_list_type = OperationMemberType;
+      ast.member_list[ast.size].member_list.operation_member =
           parseOperationMember(token_array, &i);
     } else if (token.type == Identifier) {
-      ast.member_list[ast.size].label_member = parseLabel(token_array, &i);
+      ast.member_list[ast.size].member_list_type = LabelMemberType;
+      ast.member_list[ast.size].member_list.label_member =
+          parseLabel(token_array, &i);
     } else {
       // TODO: HANDLE ERROR
     }

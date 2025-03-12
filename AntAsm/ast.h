@@ -73,15 +73,26 @@ struct LabelMember {
   struct OperationMember operation_member;
 };
 
-union MemberList {
+union MemberListUnion {
   struct OperationMember operation_member;
   struct LabelMember label_member;
+};
+
+enum MemberListEnum {
+  OperationMemberType,
+  LabelMemberType,
+};
+
+struct MemberList {
+  enum MemberListEnum member_list_type;
+
+  union MemberListUnion member_list;
 };
 
 struct Program {
   unsigned int size;
 
-  union MemberList *member_list;
+  struct MemberList *member_list;
 };
 
 #endif // AST_H
