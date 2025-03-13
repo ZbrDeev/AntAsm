@@ -12,6 +12,7 @@ enum ValueType {
   NumberType,
   HexType,
   RegisterType,
+  IdentifierType,
 };
 
 struct Position {

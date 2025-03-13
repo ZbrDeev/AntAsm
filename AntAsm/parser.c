@@ -83,6 +83,8 @@ enum ValueType literalToValue(enum TokenType token_type) {
     value_type = HexType;
   } else if (token_type == Register) {
     value_type = RegisterType;
+  } else if (token_type == Identifier) {
+    value_type = IdentifierType;
   }
 
   return value_type;
@@ -198,7 +200,8 @@ void parseSrcDestOperation(const struct TokenArray *token_array, size_t *i,
   enum TokenType src_type = token_array->tokens[*i].type;
 
   if (src_type != LiteralString || src_type != LiteralHex ||
-      src_type != LiteralNumber || src_type != Register) {
+      src_type != LiteralNumber || src_type != Register ||
+      src_type != Identifier) {
     // TODO: HANDLE ERROR
   }
 
