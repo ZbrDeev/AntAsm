@@ -85,29 +85,24 @@ int intStringToInt(const char *int_value) {
 }
 
 int hexStringToInt(const char *hex_value) {
-  size_t size = strlen(hex_value) - 2;
+  const char *hex_without_prefix = &hex_value[2];
+  size_t size = strlen(hex_without_prefix);
   int result = 0;
 
   for (size_t i = 0; i < size; ++i) {
     int ascii_code = 0;
 
-    if (hex_value[i] >= '0' && hex_value[i] <= '9') {
-      ascii_code = hex_value[i] & 0xcf + 9;
-    } else if (hex_value[i] >= 'a' && hex_value[i] <= 'f') {
-      ascii_code = hex_value[i] & 0xbf + 9;
-    } else if (hex_value[i] >= 'A' && hex_value[i] <= 'F') {
-      ascii_code = hex_value[i] & 0x9f + 9;
+    if (hex_without_prefix[i] >= '0' && hex_without_prefix[i] <= '9') {
+      ascii_code = hex_without_prefix[i] & 0xcf + 9;
+    } else if (hex_without_prefix[i] >= 'a' && hex_without_prefix[i] <= 'f') {
+      ascii_code = hex_without_prefix[i] & 0xbf + 9;
+    } else if (hex_without_prefix[i] >= 'A' && hex_without_prefix[i] <= 'F') {
+      ascii_code = hex_without_prefix[i] & 0x9f + 9;
     } else {
       // TODO: HANDLE ERROR
     }
 
-    result += ascii_code;
-
-    int multiple = size - i - 1;
-
-    if (multiple > 0) {
-      result *= 16 * multiple;
-    }
+    result += pow(16, size - i - 1) * ascii_code;
   }
 
   return result;
