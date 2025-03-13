@@ -7,14 +7,6 @@
 
 #define ONLY_DEST_OPERATION const char *register_dest;
 
-enum ValueType {
-  StringType,
-  NumberType,
-  HexType,
-  RegisterType,
-  IdentifierType,
-};
-
 struct Position {
   unsigned int line;
   unsigned int column;
@@ -58,12 +50,25 @@ enum OperationType {
   Equ,
 };
 
+enum ValueType {
+  StringType,
+  NumberType,
+  HexType,
+  RegisterType,
+  IdentifierType,
+};
+
+union ValueTypeUnion {
+  int hex_number;
+  const char *string_register_identifier;
+};
+
 struct OperationMember {
   enum OperationType operation_type;
 
   const char *register_dest;
   enum ValueType src_type;
-  const char *src_value;
+  union ValueTypeUnion src_value;
 
   struct SourceLocation *location;
 };
