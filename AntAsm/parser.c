@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "ast.h"
 #include "token.h"
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -72,22 +73,67 @@ enum OperationType stringToOperationType(const char *string) {
   return operation_type;
 }
 
-enum ValueType literalToValue(enum TokenType token_type) {
-  enum ValueType value_type;
+int intStringToInt(const char *int_value) {
+  size_t size = strlen(int_value);
+  int result = 0;
 
-  if (token_type == LiteralString) {
-    value_type = StringType;
-  } else if (token_type == LiteralNumber) {
-    value_type = NumberType;
-  } else if (token_type == LiteralHex) {
-    value_type = HexType;
-  } else if (token_type == Register) {
-    value_type = RegisterType;
-  } else if (token_type == Identifier) {
-    value_type = IdentifierType;
+  for (size_t i = 0; i < size; ++i) {
+    result += pow(10, size - i - 1) * (int_value[i] & 0xcf);
   }
 
-  return value_type;
+  return result;
+}
+
+int hexStringToInt(const char *hex_value) {
+  size_t size = strlen(hex_value) - 2;
+  int result = 0;
+
+  for (size_t i = 0; i < size; ++i) {
+    int ascii_code = 0;
+
+    if (hex_value[i] >= '0' && hex_value[i] <= '9') {
+      ascii_code = hex_value[i] & 0xcf + 9;
+    } else if (hex_value[i] >= 'a' && hex_value[i] <= 'f') {
+      ascii_code = hex_value[i] & 0xbf + 9;
+    } else if (hex_value[i] >= 'A' && hex_value[i] <= 'F') {
+      ascii_code = hex_value[i] & 0x9f + 9;
+    } else {
+      // TODO: HANDLE ERROR
+    }
+
+    result += ascii_code;
+
+    int multiple = size - i - 1;
+
+    if (multiple > 0) {
+      result *= 16 * multiple;
+    }
+  }
+
+  return result;
+}
+
+void literalToValueType(struct OperationMember *operation_member,
+                        enum TokenType token_type, const char *value) {
+
+  if (token_type == LiteralString) {
+    operation_member->src_type = StringType;
+    operation_member->src_value.string_register_identifier = value;
+  } else if (token_type == LiteralNumber) {
+    operation_member->src_type = NumberType;
+    operation_member->src_value.hex_number = intStringToInt(value);
+  } else if (token_type == LiteralHex) {
+    operation_member->src_type = HexType;
+    operation_member->src_value.hex_number = hexStringToInt(value);
+  } else if (token_type == Register) {
+    operation_member->src_type = RegisterType;
+    operation_member->src_value.string_register_identifier = value;
+  } else if (token_type == Identifier) {
+    operation_member->src_type = IdentifierType;
+    operation_member->src_value.string_register_identifier = value;
+  } else {
+    // TODO: HANDLE ERROR
+  }
 }
 
 struct Program parse(const struct TokenArray *token_array) {
@@ -205,6 +251,5 @@ void parseSrcDestOperation(const struct TokenArray *token_array, size_t *i,
     // TODO: HANDLE ERROR
   }
 
-  operation_member->src_type = literalToValue(src_type);
-  operation_member->src_value = token_array->tokens[*i].value;
+  literalToValueType(operation_member, src_type, token_array->tokens[*i].value);
 }

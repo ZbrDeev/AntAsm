@@ -6,7 +6,12 @@
 
 enum OperationType stringToOperationType(const char *string);
 
-enum ValueType literalToValue(enum TokenType token_type);
+int intStringToInt(const char *int_value);
+
+int hexStringToInt(const char *hex_value);
+
+void literalToValueType(struct OperationMember *operation_member,
+                        enum TokenType token_type, const char *value);
 
 struct Program parse(const struct TokenArray *token_array);
 
