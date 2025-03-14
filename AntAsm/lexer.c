@@ -6,6 +6,8 @@
 struct TokenArray lexer(const struct ContentInfo *content) {
   struct TokenArray token_array;
   unsigned int keyword_size = 0;
+  token_array.size = 1;
+  token_array.tokens = (struct Token *)malloc(sizeof(struct Token));
 
   unsigned int column = 0;
   unsigned int line = 0;
@@ -36,9 +38,15 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       token.end = i;
       token.file = content->filename;
 
-      token_array.tokens = (struct Token *)realloc(
-          token_array.tokens, (token_array.size + 1) * sizeof(char));
-      token_array.tokens[token_array.size++] = token;
+      struct Token *temp = (struct Token *)realloc(
+          token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
+
+      if (temp == NULL) {
+        // TODO: HANDLE ERROR
+      }
+      token_array.tokens = temp;
+      token_array.tokens[token_array.size - 1] = token;
+      ++token_array.size;
 
       is_string = false;
       guillemet = '\0';
@@ -48,41 +56,57 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
     if (c == ' ' || c == '\t') {
       if (keyword_size > 0) {
-        lexePart(i - 1, keyword_size, content->content, &token_array);
+        lexePart(i, keyword_size, content->content, &token_array);
       }
+      keyword_size = 0;
       continue;
     } else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
                (c >= '0' && c <= '9')) {
       ++keyword_size;
     } else if (c == '\n') {
       if (keyword_size > 0) {
-        lexePart(i - 1, keyword_size, content->content, &token_array);
+        lexePart(i, keyword_size, content->content, &token_array);
       }
 
       column = 0;
       ++line;
+      keyword_size = 0;
     } else if (c == ',') {
       if (keyword_size > 0) {
-        lexePart(i - 1, keyword_size, content->content, &token_array);
+        lexePart(i, keyword_size, content->content, &token_array);
       }
 
       struct Token token;
       token.type = Comma;
 
-      token_array.tokens = (struct Token *)realloc(
+      struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
-      token_array.tokens[token_array.size++] = token;
+
+      if (temp == NULL) {
+        // TODO: HANDLE ERROR
+      }
+      token_array.tokens = temp;
+      token_array.tokens[token_array.size - 1] = token;
+      ++token_array.size;
+      keyword_size = 0;
     } else if (c == ':') {
       if (keyword_size > 0) {
-        lexePart(i - 1, keyword_size, content->content, &token_array);
+        lexePart(i, keyword_size, content->content, &token_array);
       }
 
       struct Token token;
       token.type = SemiColon;
 
-      token_array.tokens = (struct Token *)realloc(
+      struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
-      token_array.tokens[token_array.size++] = token;
+
+      if (temp == NULL) {
+        // TODO: HANDLE ERROR
+      }
+      token_array.tokens = temp;
+      token_array.tokens[token_array.size - 1] = token;
+      ++token_array.size;
+      keyword_size = 0;
     } else if (c == '\'' || c == '"') {
       is_string = true;
       guillemet = c;
@@ -91,6 +115,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
     }
   }
 
+  --token_array.size;
   return token_array;
 }
 
@@ -111,21 +136,25 @@ void lexePart(const unsigned int position, const unsigned int keyword_size,
     token.type = Opcode;
   } else if (REGISTER_CMP(keyword_char)) {
     token.type = Register;
-    token.value = keyword_char;
   } else if (keyword_char[0] == '0' && keyword_char[1] == 'x') {
     token.type = LiteralHex;
-    token.value = keyword_char;
   } else if (isNumber(keyword_char)) {
     token.type = LiteralNumber;
-    token.value = keyword_char;
   } else {
     token.type = Identifier;
-    token.value = keyword_char;
   }
 
-  array->tokens = (struct Token *)realloc(
+  token.value = keyword_char;
+
+  struct Token *temp = (struct Token *)realloc(
       array->tokens, (array->size + 1) * sizeof(struct Token));
-  array->tokens[array->size++] = token;
+
+  if (temp == NULL) {
+    // TODO: HANDLE ERROR
+  }
+  array->tokens = temp;
+  array->tokens[array->size - 1] = token;
+  ++array->size;
 }
 
 bool isNumber(const char *number) {

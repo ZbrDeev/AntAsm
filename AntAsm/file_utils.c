@@ -13,7 +13,7 @@ const char *readFile(const char *path) {
   long filesize = ftell(fp);
   rewind(fp);
 
-  char buffer[filesize + 1];
+  char *buffer = (char *)malloc(filesize + 1);
   buffer[filesize] = '\0';
 
   fread(buffer, filesize, 1, fp);

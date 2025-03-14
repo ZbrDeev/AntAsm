@@ -2,6 +2,7 @@
 #include "ast.h"
 #include "token.h"
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -133,6 +134,7 @@ void literalToValueType(struct OperationMember *operation_member,
 
 struct Program parse(const struct TokenArray *token_array) {
   struct Program ast;
+  ast.size = 0;
   ast.member_list = (struct MemberList *)malloc(sizeof(struct MemberList));
 
   for (size_t i = 0; i < token_array->size; ++i) {
@@ -181,6 +183,7 @@ struct OperationMember
 parseOperationMember(const struct TokenArray *token_array, size_t *i) {
   struct OperationMember operation_member;
 
+  printf("valeur: %ld\n", *i);
   operation_member.operation_type =
       stringToOperationType(token_array->tokens[*i].value);
 
@@ -232,11 +235,13 @@ void parseSrcDestOperation(const struct TokenArray *token_array, size_t *i,
     // TODO: HANDLE ERROR
   }
 
-  operation_member->register_dest = token_array->tokens[*i++].value;
+  operation_member->register_dest = token_array->tokens[*i].value;
+  ++*i;
 
-  if (token_array->tokens[*i++].type != Comma) {
+  if (token_array->tokens[*i].type != Comma) {
     // TODO: HANDLE ERROR
   }
+  ++*i;
 
   enum TokenType src_type = token_array->tokens[*i].type;
 
