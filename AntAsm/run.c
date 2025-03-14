@@ -1,8 +1,13 @@
 #include "run.h"
 #include "ast.h"
+#include "file_utils.h"
 #include "hashmap.h"
+#include "lexer.h"
+#include "parser.h"
+#include "token.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 void runScript(struct Program *program) {
   struct RegisterEmu register_emu;
@@ -164,4 +169,18 @@ void manageDestSrc(struct OperationMember operation_member,
   } else if (value.node_value_type == Int8) {
     *(int8_t *)value.node_value = register_value;
   }
+}
+
+void doAllProcess(const char *file) {
+  const char *file_content = readFile(file);
+  size_t file_size = strlen(file_content);
+
+  const struct ContentInfo content_info = {
+      .content = file_content, .filename = file, .content_size = file_size};
+
+  struct TokenArray token = lexer(&content_info);
+
+  struct Program program = parse(&token);
+
+  runScript(&program);
 }

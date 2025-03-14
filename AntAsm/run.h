@@ -248,4 +248,6 @@ void manageIdentifierAsADest(struct OperationMember operation_member,
 void manageDestSrc(struct OperationMember operation_member,
                    struct RegisterEmu *register_emu);
 
+void doAllProcess(const char *file);
+
 #endif // RUN_H

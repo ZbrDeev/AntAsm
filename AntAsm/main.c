@@ -1,6 +1,9 @@
-#include <stdio.h>
+#include "run.h"
 
 int main(int argc, char **argv) {
-  printf("Hello, World\n");
+  if (argc != 2) {
+    // TODO: HANDLE ERROR
+  }
+  doAllProcess(argv[2]);
   return 0;
 }
