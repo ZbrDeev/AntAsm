@@ -242,6 +242,9 @@ void manageOperationType(struct OperationMember operation_member,
 void manageOnlyRegisterDest(struct OperationMember operation_member,
                             struct RegisterEmu *register_emu);
 
+void manageIdentifierAsADest(struct OperationMember operation_member,
+                             struct RegisterEmu *register_emu);
+
 void manageDestSrc(struct OperationMember operation_member,
                    struct RegisterEmu *register_emu);
 

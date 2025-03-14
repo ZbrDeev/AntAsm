@@ -2,6 +2,7 @@
 #include "ast.h"
 #include "hashmap.h"
 #include <stddef.h>
+#include <stdint.h>
 
 void runScript(struct Program *program) {
   struct RegisterEmu register_emu;
@@ -48,6 +49,19 @@ void manageOperationType(struct OperationMember operation_member,
              operation_member.operation_type == Jnl ||
              operation_member.operation_type == Jle ||
              operation_member.operation_type == Jnle) {
+    manageIdentifierAsADest(operation_member, register_emu);
+  } else if (operation_member.operation_type == Mov ||
+             operation_member.operation_type == Add ||
+             operation_member.operation_type == Cmp ||
+             operation_member.operation_type == Or ||
+             operation_member.operation_type == Sub ||
+             operation_member.operation_type == Imul ||
+             operation_member.operation_type == And ||
+             operation_member.operation_type == Xor ||
+             operation_member.operation_type == Equ) {
+    manageDestSrc(operation_member, register_emu);
+  } else {
+    // TODO: HANDLE ERROR
   }
 }
 
@@ -76,6 +90,69 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
     --register_value;
   } else {
     // TODO: HANDLE ERROR
+  }
+
+  if (value.node_value_type == Int64) {
+    *(int64_t *)value.node_value = register_value;
+  } else if (value.node_value_type == Int32) {
+    *(int32_t *)value.node_value = register_value;
+  } else if (value.node_value_type == Int16) {
+    *(int16_t *)value.node_value = register_value;
+  } else if (value.node_value_type == Int8) {
+    *(int8_t *)value.node_value = register_value;
+  }
+}
+
+void manageIdentifierAsADest(struct OperationMember operation_member,
+                             struct RegisterEmu *register_emu) {
+  // TODO: SOON WITH THE LINKED LIST
+}
+
+void manageDestSrc(struct OperationMember operation_member,
+                   struct RegisterEmu *register_emu) {
+  struct NodeValue value =
+      getValue(&register_emu->hashmap, operation_member.register_dest);
+
+  int64_t register_value;
+  int64_t src_value;
+
+  if (value.node_value_type == Int64) {
+    register_value = *(int64_t *)value.node_value;
+  } else if (value.node_value_type == Int32) {
+    register_value = *(int32_t *)value.node_value;
+  } else if (value.node_value_type == Int16) {
+    register_value = *(int16_t *)value.node_value;
+  } else if (value.node_value_type == Int8) {
+    register_value = *(int8_t *)value.node_value;
+  } else {
+    // TODO: HANDLE ERROR
+  }
+
+  if (operation_member.src_type == HexType ||
+      operation_member.src_type == NumberType) {
+    src_value = operation_member.src_value.hex_number;
+  } else {
+    // TODO: HANDLE ERROR (NOT YET IMPLEMENTED)
+  }
+
+  if (operation_member.operation_type == Mov) {
+    register_value = src_value;
+  } else if (operation_member.operation_type == Add) {
+    register_value += src_value;
+  } else if (operation_member.operation_type == Cmp) {
+    // SOON
+  } else if (operation_member.operation_type == Or) {
+    register_value |= src_value;
+  } else if (operation_member.operation_type == Sub) {
+    register_value -= src_value;
+  } else if (operation_member.operation_type == Imul) {
+    register_value *= src_value;
+  } else if (operation_member.operation_type == And) {
+    register_value &= src_value;
+  } else if (operation_member.operation_type == Xor) {
+    register_value ^= src_value;
+  } else if (operation_member.operation_type == Equ) {
+    // SOON
   }
 
   if (value.node_value_type == Int64) {
