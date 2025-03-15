@@ -43,4 +43,8 @@ struct NodeValue getValue(struct HashMap *hashmap, const char *key);
 void addKeyValue(struct HashMap *hashmap, const char *key, void *value_ptr,
                  const enum NodeValueType value_type);
 
+void freeHashMap(struct HashMap *hashmap);
+
+void freeNode(struct Node *node);
+
 #endif // HASHMAP_H

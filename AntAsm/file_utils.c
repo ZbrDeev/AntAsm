@@ -1,8 +1,7 @@
 #include "file_utils.h"
-#include <stdio.h>
 #include <stdlib.h>
 
-const char *readFile(const char *path) {
+char *readFile(const char *path) {
   FILE *fp;
 
   if ((fp = fopen(path, "r")) == NULL) {
@@ -17,6 +16,7 @@ const char *readFile(const char *path) {
   buffer[filesize] = '\0';
 
   fread(buffer, filesize, 1, fp);
+  fclose(fp);
 
   return buffer;
 }

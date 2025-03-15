@@ -1,6 +1,7 @@
 #include "lexer.h"
 #include "token.h"
 #include <stdlib.h>
+#include <string.h>
 
 struct TokenArray lexer(const struct ContentInfo *content) {
   struct TokenArray token_array;
@@ -77,6 +78,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
       struct Token token;
       token.type = Comma;
+      token.value = NULL;
 
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
@@ -95,6 +97,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
       struct Token token;
       token.type = SemiColon;
+      token.value = NULL;
 
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
@@ -120,30 +123,27 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
 void lexePart(const unsigned int position, const unsigned int keyword_size,
               const char *content, struct TokenArray *array) {
-  char *keyword_char = (char *)malloc((keyword_size + 1) * sizeof(char));
+  struct Token token;
+  token.value = (char *)malloc((keyword_size + 1) * sizeof(char));
 
   for (size_t i = 0; i < keyword_size; ++i) {
     unsigned int text_position = position - keyword_size + i;
-    keyword_char[i] = content[text_position];
+    token.value[i] = content[text_position];
   }
 
-  keyword_char[keyword_size] = '\0';
+  token.value[keyword_size] = '\0';
 
-  struct Token token;
-
-  if (OPCODE_CMP(keyword_char)) {
+  if (OPCODE_CMP(token.value)) {
     token.type = Opcode;
-  } else if (REGISTER_CMP(keyword_char)) {
+  } else if (REGISTER_CMP(token.value)) {
     token.type = Register;
-  } else if (keyword_char[0] == '0' && keyword_char[1] == 'x') {
+  } else if (token.value[0] == '0' && token.value[1] == 'x') {
     token.type = LiteralHex;
-  } else if (isNumber(keyword_char)) {
+  } else if (isNumber(token.value)) {
     token.type = LiteralNumber;
   } else {
     token.type = Identifier;
   }
-
-  token.value = keyword_char;
 
   struct Token *temp = (struct Token *)realloc(
       array->tokens, (array->size + 1) * sizeof(struct Token));

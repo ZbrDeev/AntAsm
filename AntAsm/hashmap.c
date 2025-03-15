@@ -64,24 +64,42 @@ void addKeyValue(struct HashMap *hashmap, const char *key, void *value_ptr,
                  const enum NodeValueType value_type) {
   struct NodeValue value = {.node_value = value_ptr,
                             .node_value_type = value_type};
-  struct Node node = {.key = key, .value = value};
+  struct Node node = {
+      .key = key, .value = value, .is_empty = false, .next = NULL};
   int sum_of_key = stringToSum(key);
   int index = CALC_KEY_INDEX(sum_of_key, hashmap->capacity);
 
   struct Node *node_it = &hashmap->nodeList[index];
 
   if (node_it->is_empty) {
-    node_it->is_empty = false;
-    node_it->key = key;
-    node_it->value = value;
+    *node_it = node;
+    return;
   }
 
-  while ((node_it = node_it->next) != NULL) {
+  while (node_it->next != NULL) {
+    node_it = node_it->next;
   }
 
-  node_it = (struct Node *)malloc(sizeof(struct Node));
-  node_it->next = NULL;
-  node_it->is_empty = false;
-  node_it->key = key;
-  node_it->value = value;
+  node_it->next = (struct Node *)malloc(sizeof(struct Node));
+  *node_it->next = node;
+}
+
+void freeHashMap(struct HashMap *hashmap) {
+  for (size_t i = 0; i < hashmap->capacity; ++i) {
+    if (!hashmap->nodeList[i].is_empty) {
+      freeNode(hashmap->nodeList[i].next);
+    }
+  }
+
+  free(hashmap->nodeList);
+}
+
+void freeNode(struct Node *node) {
+  struct Node *tmp;
+
+  while (node->next != NULL) {
+    tmp = node;
+    node = node->next;
+    free(tmp);
+  }
 }

@@ -133,22 +133,27 @@ void literalToValueType(struct OperationMember *operation_member,
 
 struct Program parse(const struct TokenArray *token_array) {
   struct Program ast;
-  ast.size = 0;
+  ast.size = 1;
   ast.member_list = (struct MemberList *)malloc(sizeof(struct MemberList));
 
   for (size_t i = 0; i < token_array->size; ++i) {
     struct Token token = token_array->tokens[i];
 
-    ast.member_list = (struct MemberList *)realloc(
-        ast.member_list, (ast.size + 1) * sizeof(struct OperationMember));
+    struct MemberList *temp = (struct MemberList *)realloc(
+        ast.member_list, (ast.size + 1) * sizeof(struct MemberList));
 
+    if (temp == NULL) {
+      // TODO: HANDLE ERROR
+    }
+
+    ast.member_list = temp;
     if (token.type == Opcode) {
-      ast.member_list[ast.size].member_list_type = OperationMemberType;
-      ast.member_list[ast.size].member_list.operation_member =
+      ast.member_list[ast.size - 1].member_list_type = OperationMemberType;
+      ast.member_list[ast.size - 1].member_list.operation_member =
           parseOperationMember(token_array, &i);
     } else if (token.type == Identifier) {
-      ast.member_list[ast.size].member_list_type = LabelMemberType;
-      ast.member_list[ast.size].member_list.label_member =
+      ast.member_list[ast.size - 1].member_list_type = LabelMemberType;
+      ast.member_list[ast.size - 1].member_list.label_member =
           parseLabel(token_array, &i);
     } else {
       // TODO: HANDLE ERROR

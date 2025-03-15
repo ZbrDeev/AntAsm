@@ -7,6 +7,7 @@
 #include "token.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 void runScript(struct Program *program) {
@@ -14,7 +15,7 @@ void runScript(struct Program *program) {
   INIT_REGISTER_EMU(register_emu)
   INIT_HASHMAP_REGISTER_EMU(register_emu)
 
-  for (size_t i = 0; i < program->size; ++i) {
+  for (size_t i = 0; i < program->size - 1; ++i) {
     struct MemberList member_list = program->member_list[i];
 
     if (member_list.member_list_type == OperationMemberType) {
@@ -22,6 +23,8 @@ void runScript(struct Program *program) {
                           &register_emu);
     }
   }
+
+  freeHashMap(&register_emu.hashmap);
 }
 
 void manageOperationType(struct OperationMember operation_member,
@@ -172,7 +175,7 @@ void manageDestSrc(struct OperationMember operation_member,
 }
 
 void doAllProcess(const char *file) {
-  const char *file_content = readFile(file);
+  char *file_content = readFile(file);
   size_t file_size = strlen(file_content);
 
   const struct ContentInfo content_info = {
@@ -183,4 +186,16 @@ void doAllProcess(const char *file) {
   struct Program program = parse(&token);
 
   runScript(&program);
+
+  free(program.member_list);
+
+  for (size_t i = 0; i < token.size; ++i) {
+    if (token.tokens[i].value != NULL) {
+      free(token.tokens[i].value);
+    }
+  }
+
+  free(token.tokens);
+
+  free(file_content);
 }

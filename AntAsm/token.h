@@ -20,7 +20,7 @@ struct Token {
   unsigned int end;
   unsigned int line;
 
-  const char *value;
+  char *value;
   const char *file;
 };
 
