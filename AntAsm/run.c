@@ -118,8 +118,8 @@ void manageDestSrc(struct OperationMember operation_member,
   struct NodeValue value =
       getValue(&register_emu->hashmap, operation_member.register_dest);
 
-  int64_t register_value;
-  int64_t src_value;
+  int64_t register_value = 0;
+  int64_t src_value = 0;
 
   if (value.node_value_type == Int64) {
     register_value = *(int64_t *)value.node_value;

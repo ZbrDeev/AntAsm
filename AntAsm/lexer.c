@@ -1,6 +1,5 @@
 #include "lexer.h"
 #include "token.h"
-#include <stdio.h>
 #include <stdlib.h>
 
 struct TokenArray lexer(const struct ContentInfo *content) {
@@ -158,9 +157,15 @@ void lexePart(const unsigned int position, const unsigned int keyword_size,
 }
 
 bool isNumber(const char *number) {
-  int len;
-  float ignore;
-  int ret = sscanf(number, "%f %n", &ignore, &len);
+  size_t size = strlen(number);
 
-  return ret == 1 && !number[len];
+  for (size_t i = 0; i < size; ++i) {
+    if (number[i] >= '0' && number[i] <= '9') {
+      continue;
+    } else {
+      return false;
+    }
+  }
+
+  return true;
 }

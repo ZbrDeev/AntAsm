@@ -2,7 +2,6 @@
 #include "ast.h"
 #include "token.h"
 #include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -183,7 +182,6 @@ struct OperationMember
 parseOperationMember(const struct TokenArray *token_array, size_t *i) {
   struct OperationMember operation_member;
 
-  printf("valeur: %ld\n", *i);
   operation_member.operation_type =
       stringToOperationType(token_array->tokens[*i].value);
 

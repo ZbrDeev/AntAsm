@@ -31,14 +31,14 @@ static struct NodeValue navigateIntoNode(struct Node *node, const char *key) {
   struct Node *node_it = node;
 
   while (node_it->next != NULL) {
-    if (node_it->is_empty) {
+    if (strcmp(key, node_it->key) == 0) {
       return node_it->value;
     }
 
     node_it = node_it->next;
   }
 
-  if (node_it->is_empty) {
+  if (strcmp(key, node_it->key) == 0) {
     return node_it->value;
   }
 
