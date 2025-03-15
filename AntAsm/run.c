@@ -24,7 +24,7 @@ void runScript(struct Program *program) {
     }
   }
 
-  freeHashMap(&register_emu.hashmap);
+  free(register_emu.hashmap.nodeList);
 }
 
 void manageOperationType(struct OperationMember operation_member,
