@@ -1,5 +1,7 @@
 #include "parser.h"
 #include "ast.h"
+#include "lexer.h"
+#include "throw.h"
 #include "token.h"
 #include <math.h>
 #include <stdlib.h>
@@ -68,6 +70,8 @@ enum OperationType stringToOperationType(const char *string) {
     operation_type = Jnle;
   } else if (strcmp(string, "equ") == 0) {
     operation_type = Equ;
+  } else {
+    // TODO: HANDLE ERROR
   }
 
   return operation_type;
@@ -99,7 +103,7 @@ int hexStringToInt(const char *hex_value) {
     } else if (hex_without_prefix[i] >= 'A' && hex_without_prefix[i] <= 'F') {
       ascii_code = hex_without_prefix[i] & 0x9f + 9;
     } else {
-      // TODO: HANDLE ERROR
+      throwError(WRONG_VALUE);
     }
 
     result += pow(16, size - i - 1) * ascii_code;
@@ -127,11 +131,11 @@ void literalToValueType(struct OperationMember *operation_member,
     operation_member->src_type = IdentifierType;
     operation_member->src_value.string_register_identifier = value;
   } else {
-    // TODO: HANDLE ERROR
+    throwError(WRONG_VALUE);
   }
 }
 
-struct Program parse(const struct TokenArray *token_array) {
+struct Program parse(struct TokenArray *token_array) {
   struct Program ast;
   ast.size = 1;
   ast.member_list = (struct MemberList *)malloc(sizeof(struct MemberList));
@@ -143,7 +147,8 @@ struct Program parse(const struct TokenArray *token_array) {
         ast.member_list, (ast.size + 1) * sizeof(struct MemberList));
 
     if (temp == NULL) {
-      // TODO: HANDLE ERROR
+      freeToken(token_array);
+      throwError(INTERNAL_BAD_ALLOC);
     }
 
     ast.member_list = temp;
@@ -156,7 +161,8 @@ struct Program parse(const struct TokenArray *token_array) {
       ast.member_list[ast.size - 1].member_list.label_member =
           parseLabel(token_array, &i);
     } else {
-      // TODO: HANDLE ERROR
+      freeToken(token_array);
+      throwError(WRONG_KEYWORD);
     }
 
     ++ast.size;
@@ -165,26 +171,35 @@ struct Program parse(const struct TokenArray *token_array) {
   return ast;
 }
 
-struct LabelMember parseLabel(const struct TokenArray *token_array, size_t *i) {
+struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i) {
   struct LabelMember label_member;
+  label_member.location.start.column = token_array->tokens[*i].start;
+  label_member.location.start.line = token_array->tokens[*i].line;
 
-  label_member.label_name = token_array->tokens[*i++].value;
+  label_member.label_name = token_array->tokens[*i].value;
+  ++*i;
 
-  if (token_array->tokens[*i++].type != SemiColon) {
-    // TODO: HANDLE ERROR
+  if (token_array->tokens[*i].type != SemiColon) {
+    freeToken(token_array);
+    throwError(EXPECT_SEMICOLON);
   }
 
+  ++*i;
+
   if (token_array->tokens[*i].type != Opcode) {
-    // TODO: HANDLE ERROR
+    freeToken(token_array);
+    throwError(WRONG_KEYWORD);
   }
 
   label_member.operation_member = parseOperationMember(token_array, i);
 
+  label_member.location.end = label_member.operation_member.location.end;
+
   return label_member;
 }
 
-struct OperationMember
-parseOperationMember(const struct TokenArray *token_array, size_t *i) {
+struct OperationMember parseOperationMember(struct TokenArray *token_array,
+                                            size_t *i) {
   struct OperationMember operation_member;
 
   operation_member.operation_type =
@@ -221,37 +236,42 @@ parseOperationMember(const struct TokenArray *token_array, size_t *i) {
   return operation_member;
 }
 
-void parseOnlyDestOperation(const struct TokenArray *token_array, size_t i,
+void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
                             struct OperationMember *operation_member) {
   struct Token token = token_array->tokens[i];
 
   if (token.type != Register) {
-    // TODO: HANDLE ERROR
+    freeToken(token_array);
+    throwError(EXPECT_REGISTER);
   }
 
   operation_member->register_dest = token.value;
+  operation_member->src_type = NullType;
 }
 
-void parseSrcDestOperation(const struct TokenArray *token_array, size_t *i,
+void parseSrcDestOperation(struct TokenArray *token_array, size_t *i,
                            struct OperationMember *operation_member) {
   if (token_array->tokens[*i].type != Register) {
-    // TODO: HANDLE ERROR
+    freeToken(token_array);
+    throwError(EXPECT_REGISTER);
   }
 
   operation_member->register_dest = token_array->tokens[*i].value;
   ++*i;
 
   if (token_array->tokens[*i].type != Comma) {
-    // TODO: HANDLE ERROR
+    freeToken(token_array);
+    throwError(EXPECT_COMMA);
   }
   ++*i;
 
   enum TokenType src_type = token_array->tokens[*i].type;
 
-  if (src_type != LiteralString || src_type != LiteralHex ||
-      src_type != LiteralNumber || src_type != Register ||
+  if (src_type != LiteralString && src_type != LiteralHex &&
+      src_type != LiteralNumber && src_type != Register &&
       src_type != Identifier) {
-    // TODO: HANDLE ERROR
+    freeToken(token_array);
+    throwError(WRONG_VALUE);
   }
 
   literalToValueType(operation_member, src_type, token_array->tokens[*i].value);

@@ -1,11 +1,12 @@
 #include "file_utils.h"
+#include "throw.h"
 #include <stdlib.h>
 
 char *readFile(const char *path) {
   FILE *fp;
 
   if ((fp = fopen(path, "r")) == NULL) {
-    // TODO: HANDLE ERROR
+    throwError(-1, "Invalid file path");
   }
 
   fseek(fp, 0, SEEK_END);

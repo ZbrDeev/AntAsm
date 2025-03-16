@@ -56,6 +56,7 @@ enum ValueType {
   HexType,
   RegisterType,
   IdentifierType,
+  NullType,
 };
 
 union ValueTypeUnion {
@@ -70,13 +71,15 @@ struct OperationMember {
   enum ValueType src_type;
   union ValueTypeUnion src_value;
 
-  struct SourceLocation *location;
+  struct SourceLocation location;
 };
 
 struct LabelMember {
   const char *label_name;
 
   struct OperationMember operation_member;
+
+  struct SourceLocation location;
 };
 
 union MemberListUnion {

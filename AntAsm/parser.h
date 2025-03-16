@@ -13,17 +13,17 @@ int hexStringToInt(const char *hex_value);
 void literalToValueType(struct OperationMember *operation_member,
                         enum TokenType token_type, const char *value);
 
-struct Program parse(const struct TokenArray *token_array);
+struct Program parse(struct TokenArray *token_array);
 
-struct LabelMember parseLabel(const struct TokenArray *token_array, size_t *i);
+struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i);
 
-struct OperationMember
-parseOperationMember(const struct TokenArray *token_array, size_t *i);
+struct OperationMember parseOperationMember(struct TokenArray *token_array,
+                                            size_t *i);
 
-void parseOnlyDestOperation(const struct TokenArray *token_array, size_t i,
+void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
                             struct OperationMember *operation_member);
 
-void parseSrcDestOperation(const struct TokenArray *token_array, size_t *i,
+void parseSrcDestOperation(struct TokenArray *token_array, size_t *i,
                            struct OperationMember *operation_member);
 
 #endif // PARSER_H

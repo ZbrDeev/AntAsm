@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "throw.h"
 #include "token.h"
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +43,8 @@ struct TokenArray lexer(const struct ContentInfo *content) {
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
 
       if (temp == NULL) {
-        // TODO: HANDLE ERROR
+        freeToken(&token_array);
+        throwError(INTERNAL_BAD_ALLOC);
       }
       token_array.tokens = temp;
       token_array.tokens[token_array.size - 1] = token;
@@ -76,15 +78,15 @@ struct TokenArray lexer(const struct ContentInfo *content) {
         lexePart(i, keyword_size, content->content, &token_array);
       }
 
-      struct Token token;
-      token.type = Comma;
-      token.value = NULL;
+      struct Token token = {
+          .type = Comma, .value = NULL, .start = i - 1, .end = i};
 
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
 
       if (temp == NULL) {
-        // TODO: HANDLE ERROR
+        freeToken(&token_array);
+        throwError(INTERNAL_BAD_ALLOC);
       }
       token_array.tokens = temp;
       token_array.tokens[token_array.size - 1] = token;
@@ -95,15 +97,15 @@ struct TokenArray lexer(const struct ContentInfo *content) {
         lexePart(i, keyword_size, content->content, &token_array);
       }
 
-      struct Token token;
-      token.type = SemiColon;
-      token.value = NULL;
+      struct Token token = {
+          .type = SemiColon, .value = NULL, .start = i - 1, .end = i};
 
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
 
       if (temp == NULL) {
-        // TODO: HANDLE ERROR
+        freeToken(&token_array);
+        throwError(INTERNAL_BAD_ALLOC);
       }
       token_array.tokens = temp;
       token_array.tokens[token_array.size - 1] = token;
@@ -125,6 +127,8 @@ void lexePart(const unsigned int position, const unsigned int keyword_size,
               const char *content, struct TokenArray *array) {
   struct Token token;
   token.value = (char *)malloc((keyword_size + 1) * sizeof(char));
+  token.start = position - keyword_size;
+  token.end = position;
 
   for (size_t i = 0; i < keyword_size; ++i) {
     unsigned int text_position = position - keyword_size + i;
@@ -149,7 +153,8 @@ void lexePart(const unsigned int position, const unsigned int keyword_size,
       array->tokens, (array->size + 1) * sizeof(struct Token));
 
   if (temp == NULL) {
-    // TODO: HANDLE ERROR
+    freeToken(array);
+    throwError(INTERNAL_BAD_ALLOC);
   }
   array->tokens = temp;
   array->tokens[array->size - 1] = token;
@@ -168,4 +173,14 @@ bool isNumber(const char *number) {
   }
 
   return true;
+}
+
+void freeToken(struct TokenArray *token_array) {
+  for (size_t i = 0; i < token_array->size; ++i) {
+    if (token_array->tokens[i].value != NULL) {
+      free(token_array->tokens[i].value);
+    }
+  }
+
+  free(token_array->tokens);
 }

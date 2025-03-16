@@ -4,6 +4,7 @@
 #include "hashmap.h"
 #include "lexer.h"
 #include "parser.h"
+#include "throw.h"
 #include "token.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -30,7 +31,8 @@ void runScript(struct Program *program) {
 void manageOperationType(struct OperationMember operation_member,
                          struct RegisterEmu *register_emu) {
   if (operation_member.src_type == StringType) {
-    // TODO: HANDLE ERROR
+    free(register_emu->hashmap.nodeList);
+    throwError(STRING_NOT_IMPLEMENTED_YET);
   }
 
   int64_t value;
@@ -69,7 +71,8 @@ void manageOperationType(struct OperationMember operation_member,
              operation_member.operation_type == Equ) {
     manageDestSrc(operation_member, register_emu);
   } else {
-    // TODO: HANDLE ERROR
+    free(register_emu->hashmap.nodeList);
+    throwError(INTERNAL_ERROR("Operation Type parsing"));
   }
 }
 
@@ -89,7 +92,8 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
   } else if (value.node_value_type == Int8) {
     register_value = *(int8_t *)value.node_value;
   } else {
-    // TODO: HANDLE ERROR
+    free(register_emu->hashmap.nodeList);
+    throwError(WRONG_VALUE);
   }
 
   if (operation_member.operation_type == Inc) {
@@ -97,7 +101,8 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
   } else if (operation_member.operation_type == Dec) {
     --register_value;
   } else {
-    // TODO: HANDLE ERROR
+    free(register_emu->hashmap.nodeList);
+    throwError(7, "Other operation are not implemented yet");
   }
 
   if (value.node_value_type == Int64) {
@@ -133,14 +138,16 @@ void manageDestSrc(struct OperationMember operation_member,
   } else if (value.node_value_type == Int8) {
     register_value = *(int8_t *)value.node_value;
   } else {
-    // TODO: HANDLE ERROR
+    free(register_emu->hashmap.nodeList);
+    throwError(WRONG_VALUE);
   }
 
   if (operation_member.src_type == HexType ||
       operation_member.src_type == NumberType) {
     src_value = operation_member.src_value.hex_number;
   } else {
-    // TODO: HANDLE ERROR (NOT YET IMPLEMENTED)
+    free(register_emu->hashmap.nodeList);
+    throwError(WRONG_VALUE);
   }
 
   if (operation_member.operation_type == Mov) {
@@ -182,20 +189,12 @@ void doAllProcess(const char *file) {
       .content = file_content, .filename = file, .content_size = file_size};
 
   struct TokenArray token = lexer(&content_info);
+  free(file_content);
 
   struct Program program = parse(&token);
 
   runScript(&program);
 
   free(program.member_list);
-
-  for (size_t i = 0; i < token.size; ++i) {
-    if (token.tokens[i].value != NULL) {
-      free(token.tokens[i].value);
-    }
-  }
-
-  free(token.tokens);
-
-  free(file_content);
+  freeToken(&token);
 }

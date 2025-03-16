@@ -71,4 +71,6 @@ void lexePart(const unsigned int position, const unsigned int keyword_size,
 
 bool isNumber(const char *number);
 
+void freeToken(struct TokenArray *token_array);
+
 #endif // LEXER_H
