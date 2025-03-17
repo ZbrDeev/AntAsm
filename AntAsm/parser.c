@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include "throw.h"
 #include "token.h"
+#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -146,10 +147,7 @@ struct Program parse(struct TokenArray *token_array) {
     struct MemberList *temp = (struct MemberList *)realloc(
         ast.member_list, (ast.size + 1) * sizeof(struct MemberList));
 
-    if (temp == NULL) {
-      freeToken(token_array);
-      throwError(INTERNAL_BAD_ALLOC);
-    }
+    assert(temp != NULL);
 
     ast.member_list = temp;
     if (token.type == Opcode) {

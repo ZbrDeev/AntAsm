@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "throw.h"
 #include "token.h"
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -204,11 +205,7 @@ void pushStack(struct RegisterEmu *register_emu, int64_t value) {
   struct StackNode *temp = (struct StackNode *)realloc(
       stack->node, (stack->last + 1) * sizeof(struct StackNode));
 
-  if (temp == NULL) {
-    free(stack->node);
-    free(register_emu->hashmap.nodeList);
-    throwError(INTERNAL_BAD_ALLOC);
-  }
+  assert(temp != NULL);
 
   stack->node = temp;
   stack->node[stack->last - 1] = node;

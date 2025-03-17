@@ -1,6 +1,6 @@
 #include "lexer.h"
-#include "throw.h"
 #include "token.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -54,10 +54,8 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
 
-      if (temp == NULL) {
-        freeToken(&token_array);
-        throwError(INTERNAL_BAD_ALLOC);
-      }
+      assert(temp != NULL);
+
       token_array.tokens = temp;
       token_array.tokens[token_array.size - 1] = token;
       ++token_array.size;
@@ -96,10 +94,8 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
 
-      if (temp == NULL) {
-        freeToken(&token_array);
-        throwError(INTERNAL_BAD_ALLOC);
-      }
+      assert(temp != NULL);
+
       token_array.tokens = temp;
       token_array.tokens[token_array.size - 1] = token;
       ++token_array.size;
@@ -115,10 +111,8 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
 
-      if (temp == NULL) {
-        freeToken(&token_array);
-        throwError(INTERNAL_BAD_ALLOC);
-      }
+      assert(temp != NULL);
+
       token_array.tokens = temp;
       token_array.tokens[token_array.size - 1] = token;
       ++token_array.size;
@@ -164,10 +158,8 @@ void lexePart(const unsigned int position, const unsigned int keyword_size,
   struct Token *temp = (struct Token *)realloc(
       array->tokens, (array->size + 1) * sizeof(struct Token));
 
-  if (temp == NULL) {
-    freeToken(array);
-    throwError(INTERNAL_BAD_ALLOC);
-  }
+  assert(temp != NULL);
+
   array->tokens = temp;
   array->tokens[array->size - 1] = token;
   ++array->size;

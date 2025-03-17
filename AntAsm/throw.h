@@ -1,9 +1,6 @@
 #ifndef THROW_H
 #define THROW_H
 
-#define INTERNAL_BAD_ALLOC                                                     \
-  1, "Bad allocation of memory, please report the problem at: "                \
-     "https://github.com/ZbrDeev/AntAsm/issues"
 #define WRONG_KEYWORD 2, "Expect keyword"
 #define WRONG_VALUE 3, "Expect value"
 #define EXPECT_SEMICOLON 4, "Expect semicolon ':'"
