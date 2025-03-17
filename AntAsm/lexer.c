@@ -16,9 +16,21 @@ struct TokenArray lexer(const struct ContentInfo *content) {
   bool is_string = false;
   char guillemet = '\0';
 
+  bool is_comment = false;
+
   for (size_t i = 0; i < content->content_size; ++i) {
     const char c = content->content[i];
     ++column;
+
+    if (c == ';') {
+      is_comment = true;
+      continue;
+    } else if (is_comment && c == '\n') {
+      is_comment = false;
+      continue;
+    } else if (is_comment) {
+      continue;
+    }
 
     if (is_string && c != guillemet) {
       ++keyword_size;
