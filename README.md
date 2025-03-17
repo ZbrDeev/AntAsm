@@ -29,7 +29,8 @@ To get started with AntAsm, follow the steps below:
 2. **Compile the Code**
 ```bash
 mkdir build && cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build .
 ```
 
 ## Usage
