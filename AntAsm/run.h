@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "hashmap.h"
 #include <stdint.h>
+#include <stdlib.h>
 
 #define INIT_REGISTER_EMU(register)                                            \
   register.rax = 0;                                                            \
@@ -146,6 +147,23 @@
   addKeyValue(&register.hashmap, "r15w", (void *)&register.r15w, Int16);       \
   addKeyValue(&register.hashmap, "r15b", (void *)&register.r15b, Int8);
 
+union StackNodeValue {
+  int32_t value_32bit;
+  int64_t value_64bit;
+};
+
+struct StackNode {
+  int8_t byte_size;
+
+  union StackNodeValue value;
+};
+
+struct Stack {
+  size_t last;
+
+  struct StackNode *node;
+};
+
 struct RegisterEmu {
   int64_t rax;
   int32_t eax;
@@ -232,6 +250,7 @@ struct RegisterEmu {
   int8_t r15b;
 
   struct HashMap hashmap;
+  struct Stack stack;
 };
 
 void runScript(struct Program *program);
@@ -247,6 +266,10 @@ void manageIdentifierAsADest(struct OperationMember operation_member,
 
 void manageDestSrc(struct OperationMember operation_member,
                    struct RegisterEmu *register_emu);
+
+void pushStack(struct RegisterEmu *register_emu, int64_t value);
+
+void popStack(struct RegisterEmu *register_emu, int64_t *register_value);
 
 void doAllProcess(const char *file);
 

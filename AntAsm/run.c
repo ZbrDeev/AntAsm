@@ -15,6 +15,9 @@ void runScript(struct Program *program) {
   struct RegisterEmu register_emu;
   INIT_REGISTER_EMU(register_emu)
   INIT_HASHMAP_REGISTER_EMU(register_emu)
+  register_emu.stack.node =
+      (struct StackNode *)malloc(sizeof(struct StackNode));
+  register_emu.stack.last = 1;
 
   for (size_t i = 0; i < program->size - 1; ++i) {
     struct MemberList member_list = program->member_list[i];
@@ -26,6 +29,7 @@ void runScript(struct Program *program) {
   }
 
   free(register_emu.hashmap.nodeList);
+  free(register_emu.stack.node);
 }
 
 void manageOperationType(struct OperationMember operation_member,
@@ -100,6 +104,10 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
     ++register_value;
   } else if (operation_member.operation_type == Dec) {
     --register_value;
+  } else if (operation_member.operation_type == Push) {
+    pushStack(register_emu, register_value);
+  } else if (operation_member.operation_type == Pop) {
+    popStack(register_emu, &register_value);
   } else {
     free(register_emu->hashmap.nodeList);
     throwError(7, "Other operation are not implemented yet");
@@ -178,6 +186,47 @@ void manageDestSrc(struct OperationMember operation_member,
     *(int16_t *)value.node_value = register_value;
   } else if (value.node_value_type == Int8) {
     *(int8_t *)value.node_value = register_value;
+  }
+}
+
+void pushStack(struct RegisterEmu *register_emu, int64_t value) {
+  struct StackNode node;
+  struct Stack *stack = &register_emu->stack;
+
+  if (value < INT32_MIN || value > INT32_MAX) {
+    node.byte_size = 8;
+    node.value.value_64bit = value;
+  } else {
+    node.byte_size = 4;
+    node.value.value_32bit = value;
+  }
+
+  struct StackNode *temp = (struct StackNode *)realloc(
+      stack->node, (stack->last + 1) * sizeof(struct StackNode));
+
+  if (temp == NULL) {
+    free(stack->node);
+    free(register_emu->hashmap.nodeList);
+    throwError(INTERNAL_BAD_ALLOC);
+  }
+
+  stack->node = temp;
+  stack->node[stack->last - 1] = node;
+  ++stack->last;
+}
+
+void popStack(struct RegisterEmu *register_emu, int64_t *register_value) {
+  struct Stack *stack = &register_emu->stack;
+  struct StackNode node = stack->node[stack->last - 2];
+
+  if (node.byte_size == 4) {
+    *register_value = node.value.value_32bit;
+  } else if (node.byte_size == 8) {
+    *register_value = node.value.value_64bit;
+  } else {
+    free(stack->node);
+    free(register_emu->hashmap.nodeList);
+    throwError(INTERNAL_ERROR("Error with the stack node bit size"));
   }
 }
 
