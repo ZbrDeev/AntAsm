@@ -72,7 +72,7 @@ enum OperationType stringToOperationType(const char *string) {
   } else if (strcmp(string, "equ") == 0) {
     operation_type = Equ;
   } else {
-    // TODO: HANDLE ERROR
+    assert(true);
   }
 
   return operation_type;
