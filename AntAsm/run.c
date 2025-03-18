@@ -37,7 +37,11 @@ void manageOperationType(struct OperationMember operation_member,
                          struct RegisterEmu *register_emu) {
   if (operation_member.src_type == StringType) {
     free(register_emu->hashmap.nodeList);
-    throwError(STRING_NOT_IMPLEMENTED_YET);
+    throwError(STRING_NOT_IMPLEMENTED_YET, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   int64_t value;
@@ -77,7 +81,12 @@ void manageOperationType(struct OperationMember operation_member,
     manageDestSrc(operation_member, register_emu);
   } else {
     free(register_emu->hashmap.nodeList);
-    throwError(INTERNAL_ERROR("Operation Type parsing"));
+    throwError(INTERNAL_ERROR("Operation Type parsing"),
+               operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 }
 
@@ -98,7 +107,11 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
     register_value = *(int8_t *)value.node_value;
   } else {
     free(register_emu->hashmap.nodeList);
-    throwError(WRONG_VALUE);
+    throwError(EXPECT_VALUE, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   if (operation_member.operation_type == Inc) {
@@ -108,10 +121,15 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
   } else if (operation_member.operation_type == Push) {
     pushStack(register_emu, register_value);
   } else if (operation_member.operation_type == Pop) {
-    popStack(register_emu, &register_value);
+    popStack(register_emu, &register_value, operation_member);
   } else {
     free(register_emu->hashmap.nodeList);
-    throwError(7, "Other operation are not implemented yet");
+    throwError(7, "Other operation are not implemented yet",
+               operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   if (value.node_value_type == Int64) {
@@ -148,7 +166,11 @@ void manageDestSrc(struct OperationMember operation_member,
     register_value = *(int8_t *)value.node_value;
   } else {
     free(register_emu->hashmap.nodeList);
-    throwError(WRONG_VALUE);
+    throwError(EXPECT_VALUE, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   if (operation_member.src_type == HexType ||
@@ -156,7 +178,12 @@ void manageDestSrc(struct OperationMember operation_member,
     src_value = operation_member.src_value.hex_number;
   } else {
     free(register_emu->hashmap.nodeList);
-    throwError(WRONG_VALUE);
+
+    throwError(EXPECT_VALUE, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   if (operation_member.operation_type == Mov) {
@@ -212,7 +239,8 @@ void pushStack(struct RegisterEmu *register_emu, int64_t value) {
   ++stack->last;
 }
 
-void popStack(struct RegisterEmu *register_emu, int64_t *register_value) {
+void popStack(struct RegisterEmu *register_emu, int64_t *register_value,
+              const struct OperationMember operation_member) {
   struct Stack *stack = &register_emu->stack;
   struct StackNode node = stack->node[stack->last - 2];
 
@@ -223,7 +251,12 @@ void popStack(struct RegisterEmu *register_emu, int64_t *register_value) {
   } else {
     free(stack->node);
     free(register_emu->hashmap.nodeList);
-    throwError(INTERNAL_ERROR("Error with the stack node bit size"));
+    throwError(INTERNAL_ERROR("Error with the stack node bit size"),
+               operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 }
 

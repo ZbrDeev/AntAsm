@@ -6,24 +6,30 @@
 
 enum OperationType stringToOperationType(const char *string);
 
-int intStringToInt(const char *int_value);
+int intStringToInt(struct TokenArray *token_array, size_t i);
 
-int hexStringToInt(const char *hex_value);
+int hexStringToInt(struct TokenArray *token_array, size_t i,
+                   const char *line_content, struct MemberList *member_list);
 
 void literalToValueType(struct OperationMember *operation_member,
-                        enum TokenType token_type, const char *value);
+                        struct TokenArray *token_array, size_t i,
+                        struct MemberList *member_list);
 
 struct Program parse(struct TokenArray *token_array);
 
-struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i);
+struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i,
+                              struct MemberList *member_list);
 
 struct OperationMember parseOperationMember(struct TokenArray *token_array,
-                                            size_t *i);
+                                            size_t *i,
+                                            struct MemberList *member_list);
 
 void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
-                            struct OperationMember *operation_member);
+                            struct OperationMember *operation_member,
+                            struct MemberList *member_list);
 
 void parseSrcDestOperation(struct TokenArray *token_array, size_t *i,
-                           struct OperationMember *operation_member);
+                           struct OperationMember *operation_member,
+                           struct MemberList *member_list);
 
 #endif // PARSER_H

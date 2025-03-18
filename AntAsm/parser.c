@@ -78,19 +78,23 @@ enum OperationType stringToOperationType(const char *string) {
   return operation_type;
 }
 
-int intStringToInt(const char *int_value) {
-  size_t size = strlen(int_value);
+int intStringToInt(struct TokenArray *token_array, size_t i) {
+  struct Token token = token_array->tokens[i];
+
+  size_t size = strlen(token.value);
   int result = 0;
 
   for (size_t i = 0; i < size; ++i) {
-    result += pow(10, size - i - 1) * (int_value[i] & 0xcf);
+    result += pow(10, size - i - 1) * (token.value[i] & 0xcf);
   }
 
   return result;
 }
 
-int hexStringToInt(const char *hex_value) {
-  const char *hex_without_prefix = &hex_value[2];
+int hexStringToInt(struct TokenArray *token_array, size_t i,
+                   const char *line_content, struct MemberList *member_list) {
+  struct Token token = token_array->tokens[i];
+  const char *hex_without_prefix = &token.value[2];
   size_t size = strlen(hex_without_prefix);
   int result = 0;
 
@@ -104,7 +108,7 @@ int hexStringToInt(const char *hex_value) {
     } else if (hex_without_prefix[i] >= 'A' && hex_without_prefix[i] <= 'F') {
       ascii_code = hex_without_prefix[i] & 0x9f + 9;
     } else {
-      throwError(WRONG_VALUE);
+      throwAndFreeToken(EXPECT_VALUE, &freeToken, token_array, i, member_list);
     }
 
     result += pow(16, size - i - 1) * ascii_code;
@@ -114,25 +118,29 @@ int hexStringToInt(const char *hex_value) {
 }
 
 void literalToValueType(struct OperationMember *operation_member,
-                        enum TokenType token_type, const char *value) {
+                        struct TokenArray *token_array, size_t i,
+                        struct MemberList *member_list) {
+  struct Token token = token_array->tokens[i];
+  enum TokenType token_type = token.type;
 
   if (token_type == LiteralString) {
     operation_member->src_type = StringType;
-    operation_member->src_value.string_register_identifier = value;
+    operation_member->src_value.string_register_identifier = token.value;
   } else if (token_type == LiteralNumber) {
     operation_member->src_type = NumberType;
-    operation_member->src_value.hex_number = intStringToInt(value);
+    operation_member->src_value.hex_number = intStringToInt(token_array, i);
   } else if (token_type == LiteralHex) {
     operation_member->src_type = HexType;
-    operation_member->src_value.hex_number = hexStringToInt(value);
+    operation_member->src_value.hex_number = hexStringToInt(
+        token_array, i, operation_member->location.line_content, member_list);
   } else if (token_type == Register) {
     operation_member->src_type = RegisterType;
-    operation_member->src_value.string_register_identifier = value;
+    operation_member->src_value.string_register_identifier = token.value;
   } else if (token_type == Identifier) {
     operation_member->src_type = IdentifierType;
-    operation_member->src_value.string_register_identifier = value;
+    operation_member->src_value.string_register_identifier = token.value;
   } else {
-    throwError(WRONG_VALUE);
+    throwAndFreeToken(EXPECT_VALUE, &freeToken, token_array, i, member_list);
   }
 }
 
@@ -151,16 +159,28 @@ struct Program parse(struct TokenArray *token_array) {
 
     ast.member_list = temp;
     if (token.type == Opcode) {
+      for (size_t j = 1; j <= 3; ++j) {
+        if (token_array->tokens[i + j].line <= 0) {
+          throwAndFreeToken(EXPECT_OPERAND, &freeToken, token_array, i,
+                            ast.member_list);
+        }
+      }
       ast.member_list[ast.size - 1].member_list_type = OperationMemberType;
       ast.member_list[ast.size - 1].member_list.operation_member =
-          parseOperationMember(token_array, &i);
+          parseOperationMember(token_array, &i, ast.member_list);
     } else if (token.type == Identifier) {
+      for (size_t j = 1; j <= 4; ++j) {
+        if (token_array->tokens[i + j].line <= 0) {
+          throwAndFreeToken(EXPECT_OPERAND, &freeToken, token_array, i,
+                            ast.member_list);
+        }
+      }
       ast.member_list[ast.size - 1].member_list_type = LabelMemberType;
       ast.member_list[ast.size - 1].member_list.label_member =
-          parseLabel(token_array, &i);
+          parseLabel(token_array, &i, ast.member_list);
     } else {
-      freeToken(token_array);
-      throwError(WRONG_KEYWORD);
+      throwAndFreeToken(EXPECT_KEYWORD, &freeToken, token_array, i,
+                        ast.member_list);
     }
 
     ++ast.size;
@@ -169,7 +189,8 @@ struct Program parse(struct TokenArray *token_array) {
   return ast;
 }
 
-struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i) {
+struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i,
+                              struct MemberList *member_list) {
   struct LabelMember label_member;
   label_member.location.start.column = token_array->tokens[*i].start;
   label_member.location.start.line = token_array->tokens[*i].line;
@@ -178,18 +199,18 @@ struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i) {
   ++*i;
 
   if (token_array->tokens[*i].type != SemiColon) {
-    freeToken(token_array);
-    throwError(EXPECT_SEMICOLON);
+    throwAndFreeToken(EXPECT_SEMICOLON, &freeToken, token_array, *i,
+                      member_list);
   }
 
   ++*i;
 
   if (token_array->tokens[*i].type != Opcode) {
-    freeToken(token_array);
-    throwError(WRONG_KEYWORD);
+    throwAndFreeToken(EXPECT_KEYWORD, &freeToken, token_array, *i, member_list);
   }
 
-  label_member.operation_member = parseOperationMember(token_array, i);
+  label_member.operation_member =
+      parseOperationMember(token_array, i, member_list);
 
   label_member.location.end = label_member.operation_member.location.end;
 
@@ -197,8 +218,14 @@ struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i) {
 }
 
 struct OperationMember parseOperationMember(struct TokenArray *token_array,
-                                            size_t *i) {
+                                            size_t *i,
+                                            struct MemberList *member_list) {
   struct OperationMember operation_member;
+  operation_member.location.filename = token_array->tokens[*i].filename;
+  operation_member.location.start.line = token_array->tokens[*i].line;
+  operation_member.location.start.column = token_array->tokens[*i].start;
+  operation_member.location.line_content =
+      token_array->line_content[token_array->tokens[*i].line - 1];
 
   operation_member.operation_type =
       stringToOperationType(token_array->tokens[*i].value);
@@ -226,40 +253,43 @@ struct OperationMember parseOperationMember(struct TokenArray *token_array,
       operation_member.operation_type == Jnl ||
       operation_member.operation_type == Jle ||
       operation_member.operation_type == Jnle) {
-    parseOnlyDestOperation(token_array, *i, &operation_member);
+    parseOnlyDestOperation(token_array, *i, &operation_member, member_list);
   } else {
-    parseSrcDestOperation(token_array, i, &operation_member);
+    parseSrcDestOperation(token_array, i, &operation_member, member_list);
   }
 
   return operation_member;
 }
 
 void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
-                            struct OperationMember *operation_member) {
+                            struct OperationMember *operation_member,
+                            struct MemberList *member_list) {
   struct Token token = token_array->tokens[i];
 
   if (token.type != Register) {
-    freeToken(token_array);
-    throwError(EXPECT_REGISTER);
+    throwAndFreeToken(EXPECT_REGISTER, &freeToken, token_array, i, member_list);
   }
 
   operation_member->register_dest = token.value;
   operation_member->src_type = NullType;
+
+  operation_member->location.end.line = token.line;
+  operation_member->location.end.column = token.end;
 }
 
 void parseSrcDestOperation(struct TokenArray *token_array, size_t *i,
-                           struct OperationMember *operation_member) {
+                           struct OperationMember *operation_member,
+                           struct MemberList *member_list) {
   if (token_array->tokens[*i].type != Register) {
-    freeToken(token_array);
-    throwError(EXPECT_REGISTER);
+    throwAndFreeToken(EXPECT_REGISTER, &freeToken, token_array, *i,
+                      member_list);
   }
 
   operation_member->register_dest = token_array->tokens[*i].value;
   ++*i;
 
   if (token_array->tokens[*i].type != Comma) {
-    freeToken(token_array);
-    throwError(EXPECT_COMMA);
+    throwAndFreeToken(EXPECT_COMMA, &freeToken, token_array, *i, member_list);
   }
   ++*i;
 
@@ -268,9 +298,11 @@ void parseSrcDestOperation(struct TokenArray *token_array, size_t *i,
   if (src_type != LiteralString && src_type != LiteralHex &&
       src_type != LiteralNumber && src_type != Register &&
       src_type != Identifier) {
-    freeToken(token_array);
-    throwError(WRONG_VALUE);
+    throwAndFreeToken(EXPECT_VALUE, &freeToken, token_array, *i, member_list);
   }
 
-  literalToValueType(operation_member, src_type, token_array->tokens[*i].value);
+  literalToValueType(operation_member, token_array, *i, member_list);
+
+  operation_member->location.end.line = token_array->tokens[*i].line;
+  operation_member->location.end.line = token_array->tokens[*i].end;
 }

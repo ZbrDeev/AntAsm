@@ -15,6 +15,8 @@ struct Position {
 struct SourceLocation {
   struct Position start;
   struct Position end;
+  const char *filename;
+  const char *line_content;
 };
 
 enum OperationType {

@@ -269,7 +269,8 @@ void manageDestSrc(struct OperationMember operation_member,
 
 void pushStack(struct RegisterEmu *register_emu, int64_t value);
 
-void popStack(struct RegisterEmu *register_emu, int64_t *register_value);
+void popStack(struct RegisterEmu *register_emu, int64_t *register_value,
+              const struct OperationMember operation_member);
 
 void doAllProcess(const char *file);
 

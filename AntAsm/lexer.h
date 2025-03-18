@@ -66,8 +66,9 @@ struct ContentInfo {
 
 struct TokenArray lexer(const struct ContentInfo *content);
 
-void lexePart(const unsigned int position, const unsigned int keyword_size,
-              const char *content, struct TokenArray *array);
+void lexePart(const size_t position, const size_t keyword_size,
+              const struct ContentInfo *content, struct TokenArray *array,
+              size_t line, size_t column);
 
 bool isNumber(const char *number);
 

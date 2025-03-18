@@ -6,12 +6,13 @@
 
 struct TokenArray lexer(const struct ContentInfo *content) {
   struct TokenArray token_array;
-  unsigned int keyword_size = 0;
+  size_t keyword_size = 0;
   token_array.size = 1;
   token_array.tokens = (struct Token *)malloc(sizeof(struct Token));
+  token_array.line_content = (char **)malloc(sizeof(char *));
 
-  unsigned int column = 0;
-  unsigned int line = 0;
+  size_t column = 0;
+  size_t line = 1;
 
   bool is_string = false;
   char guillemet = '\0';
@@ -22,10 +23,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
     const char c = content->content[i];
     ++column;
 
-    if (c == ';') {
-      is_comment = true;
-      continue;
-    } else if (is_comment && c == '\n') {
+    if (is_comment && c == '\n') {
       is_comment = false;
       continue;
     } else if (is_comment) {
@@ -39,7 +37,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       char *string_value = (char *)malloc((keyword_size + 1) * sizeof(char));
 
       for (size_t j = 0; j < keyword_size; ++j) {
-        unsigned int text_position = i - keyword_size + j;
+        size_t text_position = i - keyword_size + j;
         string_value[j] = content->content[text_position];
       }
 
@@ -47,9 +45,9 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       token.type = LiteralString;
       token.value = string_value;
       token.line = line;
-      token.start = i - keyword_size - 1;
-      token.end = i;
-      token.file = content->filename;
+      token.start = column - keyword_size - 1;
+      token.end = column;
+      token.filename = content->filename;
 
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
@@ -58,6 +56,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
       token_array.tokens = temp;
       token_array.tokens[token_array.size - 1] = token;
+      token_array.tokens[token_array.size].line = 0;
       ++token_array.size;
 
       is_string = false;
@@ -68,7 +67,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
     if (c == ' ' || c == '\t') {
       if (keyword_size > 0) {
-        lexePart(i, keyword_size, content->content, &token_array);
+        lexePart(i, keyword_size, content, &token_array, line, column);
       }
       keyword_size = 0;
       continue;
@@ -77,7 +76,22 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       ++keyword_size;
     } else if (c == '\n') {
       if (keyword_size > 0) {
-        lexePart(i, keyword_size, content->content, &token_array);
+        lexePart(i, keyword_size, content, &token_array, line, column);
+      }
+
+      char **temp = (char **)realloc(token_array.line_content,
+                                     (line + 1) * sizeof(char *));
+
+      assert(temp != NULL);
+
+      token_array.line_content = temp;
+
+      token_array.line_content[line - 1] = (char *)malloc(column--);
+      token_array.line_content[line - 1][column] = '\0';
+
+      for (size_t j = 0; j < column; ++j) {
+        size_t text_position = i - column + j;
+        token_array.line_content[line - 1][j] = content->content[text_position];
       }
 
       column = 0;
@@ -85,11 +99,15 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       keyword_size = 0;
     } else if (c == ',') {
       if (keyword_size > 0) {
-        lexePart(i, keyword_size, content->content, &token_array);
+        lexePart(i, keyword_size, content, &token_array, line, column);
       }
 
-      struct Token token = {
-          .type = Comma, .value = NULL, .start = i - 1, .end = i};
+      struct Token token = {.type = Comma,
+                            .value = NULL,
+                            .start = column - 1,
+                            .end = column,
+                            .line = line,
+                            .filename = content->filename};
 
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
@@ -98,15 +116,20 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
       token_array.tokens = temp;
       token_array.tokens[token_array.size - 1] = token;
+      token_array.tokens[token_array.size].line = 0;
       ++token_array.size;
       keyword_size = 0;
     } else if (c == ':') {
       if (keyword_size > 0) {
-        lexePart(i, keyword_size, content->content, &token_array);
+        lexePart(i, keyword_size, content, &token_array, line, column);
       }
 
-      struct Token token = {
-          .type = SemiColon, .value = NULL, .start = i - 1, .end = i};
+      struct Token token = {.type = SemiColon,
+                            .value = NULL,
+                            .start = column - 1,
+                            .end = column,
+                            .line = line,
+                            .filename = content->filename};
 
       struct Token *temp = (struct Token *)realloc(
           token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
@@ -115,8 +138,11 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
       token_array.tokens = temp;
       token_array.tokens[token_array.size - 1] = token;
+      token_array.tokens[token_array.size].line = 0;
       ++token_array.size;
       keyword_size = 0;
+    } else if (c == ';') {
+      is_comment = true;
     } else if (c == '\'' || c == '"') {
       is_string = true;
       guillemet = c;
@@ -129,16 +155,19 @@ struct TokenArray lexer(const struct ContentInfo *content) {
   return token_array;
 }
 
-void lexePart(const unsigned int position, const unsigned int keyword_size,
-              const char *content, struct TokenArray *array) {
+void lexePart(const size_t position, const size_t keyword_size,
+              const struct ContentInfo *content, struct TokenArray *array,
+              size_t line, size_t column) {
   struct Token token;
   token.value = (char *)malloc((keyword_size + 1) * sizeof(char));
-  token.start = position - keyword_size;
-  token.end = position;
+  token.start = column - keyword_size;
+  token.end = column;
+  token.line = line;
+  token.filename = content->filename;
 
   for (size_t i = 0; i < keyword_size; ++i) {
-    unsigned int text_position = position - keyword_size + i;
-    token.value[i] = content[text_position];
+    size_t text_position = position - keyword_size + i;
+    token.value[i] = content->content[text_position];
   }
 
   token.value[keyword_size] = '\0';
@@ -162,6 +191,7 @@ void lexePart(const unsigned int position, const unsigned int keyword_size,
 
   array->tokens = temp;
   array->tokens[array->size - 1] = token;
+  array->tokens[array->size].line = 0;
   ++array->size;
 }
 
@@ -180,11 +210,18 @@ bool isNumber(const char *number) {
 }
 
 void freeToken(struct TokenArray *token_array) {
+  size_t line_size = token_array->tokens[token_array->size - 1].line;
+
   for (size_t i = 0; i < token_array->size; ++i) {
     if (token_array->tokens[i].value != NULL) {
       free(token_array->tokens[i].value);
     }
   }
 
+  for (size_t i = 0; i < line_size; ++i) {
+    free(token_array->line_content[i]);
+  }
+
+  free(token_array->line_content);
   free(token_array->tokens);
 }

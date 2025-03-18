@@ -21,12 +21,13 @@ struct Token {
   unsigned int line;
 
   char *value;
-  const char *file;
+  const char *filename;
 };
 
 struct TokenArray {
   struct Token *tokens;
   size_t size;
+  char **line_content;
 };
 
 #endif // TOKEN_H
