@@ -27,6 +27,9 @@ void runScript(struct Program *program) {
     if (member_list.member_list_type == OperationMemberType) {
       manageOperationType(member_list.member_list.operation_member,
                           &register_emu);
+    } else if (member_list.member_list_type == LabelMemberType) {
+      manageOperationType(member_list.member_list.label_member.operation_member,
+                          &register_emu);
     }
   }
 

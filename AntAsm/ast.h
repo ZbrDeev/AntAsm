@@ -1,6 +1,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include "hashmap.h"
 #include <stdint.h>
 
 struct Position {
@@ -94,6 +95,8 @@ struct MemberList {
   enum MemberListEnum member_list_type;
 
   union MemberListUnion member_list;
+
+  struct HashMap symbol;
 };
 
 struct Program {

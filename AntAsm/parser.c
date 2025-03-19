@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "ast.h"
+#include "hashmap.h"
 #include "lexer.h"
 #include "throw.h"
 #include "token.h"
@@ -213,6 +214,10 @@ struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i,
       parseOperationMember(token_array, i, member_list);
 
   label_member.location.end = label_member.operation_member.location.end;
+
+  int32_t hash_value_32bit = *i;
+  addKeyValue(&member_list->symbol, label_member.label_name,
+              (void *)&hash_value_32bit, Int32);
 
   return label_member;
 }
