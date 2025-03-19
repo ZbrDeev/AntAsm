@@ -251,6 +251,7 @@ struct RegisterEmu {
 
   struct HashMap hashmap;
   struct Stack stack;
+  struct HashMap memory;
 };
 
 void runScript(struct Program *program);
@@ -271,6 +272,9 @@ void pushStack(struct RegisterEmu *register_emu, int64_t value);
 
 void popStack(struct RegisterEmu *register_emu, int64_t *register_value,
               const struct OperationMember operation_member);
+
+void pushMemory(struct OperationMember operation_member,
+                struct RegisterEmu *register_emu);
 
 void doAllProcess(const char *file);
 

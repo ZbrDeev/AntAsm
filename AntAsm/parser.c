@@ -280,7 +280,9 @@ void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
 void parseSrcDestOperation(struct TokenArray *token_array, size_t *i,
                            struct OperationMember *operation_member,
                            struct MemberList *member_list) {
-  if (token_array->tokens[*i].type != Register) {
+  if (token_array->tokens[*i].type != Register &&
+      !(strcmp(token_array->tokens[(*i) - 1].value, "equ") == 0 &&
+        token_array->tokens[*i].type == Identifier)) {
     throwAndFreeToken(EXPECT_REGISTER, &freeToken, token_array, *i,
                       member_list);
   }

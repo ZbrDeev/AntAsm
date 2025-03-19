@@ -34,7 +34,8 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       ++keyword_size;
       continue;
     } else if (is_string && c == guillemet) {
-      char *string_value = (char *)malloc((keyword_size + 1) * sizeof(char));
+      char *string_value = (char *)malloc(keyword_size + 1);
+      string_value[keyword_size] = '\0';
 
       for (size_t j = 0; j < keyword_size; ++j) {
         size_t text_position = i - keyword_size + j;
@@ -61,6 +62,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
       is_string = false;
       guillemet = '\0';
+      keyword_size = 0;
 
       continue;
     }

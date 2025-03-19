@@ -13,6 +13,7 @@ enum NodeValueType {
   Int32,
   Int16,
   Int8,
+  String,
   Null,
 };
 

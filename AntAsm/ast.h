@@ -1,11 +1,7 @@
 #ifndef AST_H
 #define AST_H
 
-#define SRC_DEST_OPERATION                                                     \
-  const char *register_dest;                                                   \
-  ValueType value_src;
-
-#define ONLY_DEST_OPERATION const char *register_dest;
+#include <stdint.h>
 
 struct Position {
   unsigned int line;
@@ -62,7 +58,7 @@ enum ValueType {
 };
 
 union ValueTypeUnion {
-  int hex_number;
+  int64_t hex_number;
   const char *string_register_identifier;
 };
 

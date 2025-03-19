@@ -19,6 +19,7 @@ void runScript(struct Program *program) {
   register_emu.stack.node =
       (struct StackNode *)malloc(sizeof(struct StackNode));
   register_emu.stack.last = 1;
+  register_emu.memory = initHashMap(10);
 
   for (size_t i = 0; i < program->size - 1; ++i) {
     struct MemberList member_list = program->member_list[i];
@@ -31,19 +32,11 @@ void runScript(struct Program *program) {
 
   free(register_emu.hashmap.nodeList);
   free(register_emu.stack.node);
+  free(register_emu.memory.nodeList);
 }
 
 void manageOperationType(struct OperationMember operation_member,
                          struct RegisterEmu *register_emu) {
-  if (operation_member.src_type == StringType) {
-    free(register_emu->hashmap.nodeList);
-    throwError(STRING_NOT_IMPLEMENTED_YET, operation_member.location.filename,
-               operation_member.location.line_content,
-               operation_member.location.start.line,
-               operation_member.location.start.column,
-               operation_member.location.end.column);
-  }
-
   int64_t value;
 
   if (operation_member.operation_type == Push ||
@@ -150,6 +143,16 @@ void manageIdentifierAsADest(struct OperationMember operation_member,
 
 void manageDestSrc(struct OperationMember operation_member,
                    struct RegisterEmu *register_emu) {
+
+  if (operation_member.src_type == StringType &&
+      operation_member.operation_type == Equ) {
+    pushMemory(operation_member, register_emu);
+    return;
+  } else if (operation_member.src_type == StringType &&
+             operation_member.operation_type != Equ) {
+    // TODO:HANDLE ERROR
+  }
+
   struct NodeValue value =
       getValue(&register_emu->hashmap, operation_member.register_dest);
 
@@ -202,8 +205,6 @@ void manageDestSrc(struct OperationMember operation_member,
     register_value &= src_value;
   } else if (operation_member.operation_type == Xor) {
     register_value ^= src_value;
-  } else if (operation_member.operation_type == Equ) {
-    // SOON
   }
 
   if (value.node_value_type == Int64) {
@@ -258,6 +259,26 @@ void popStack(struct RegisterEmu *register_emu, int64_t *register_value,
                operation_member.location.start.column,
                operation_member.location.end.column);
   }
+}
+
+void pushMemory(struct OperationMember operation_member,
+                struct RegisterEmu *register_emu) {
+  void *value;
+  enum NodeValueType value_type;
+
+  if (operation_member.src_type == NumberType ||
+      operation_member.src_type == HexType) {
+    value = (void *)&operation_member.src_value.hex_number;
+    value_type = Int64;
+  } else if (operation_member.src_type == StringType) {
+    value = (void *)operation_member.src_value.string_register_identifier;
+    value_type = String;
+  } else {
+    // TODO: HANDLE ERROR
+  }
+
+  addKeyValue(&register_emu->memory, operation_member.register_dest, value,
+              value_type);
 }
 
 void doAllProcess(const char *file) {
