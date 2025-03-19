@@ -1,0 +1,3 @@
+- [ ] Label 
+- [ ] Cmp, Jump
+- [ ] Syscall (Soon emulate the os)
