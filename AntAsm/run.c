@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,20 +17,22 @@ void runScript(struct Program *program) {
   struct RegisterEmu register_emu;
   INIT_REGISTER_EMU(register_emu)
   INIT_HASHMAP_REGISTER_EMU(register_emu)
+  SET_ZERO_FLAGS(register_emu.flags)
   register_emu.stack.node =
       (struct StackNode *)malloc(sizeof(struct StackNode));
   register_emu.stack.last = 1;
   register_emu.memory = initHashMap(10);
+  register_emu.symbol = &program->member_list->symbol;
 
   for (size_t i = 0; i < program->size - 1; ++i) {
     struct MemberList member_list = program->member_list[i];
 
     if (member_list.member_list_type == OperationMemberType) {
       manageOperationType(member_list.member_list.operation_member,
-                          &register_emu);
+                          &register_emu, &i);
     } else if (member_list.member_list_type == LabelMemberType) {
       manageOperationType(member_list.member_list.label_member.operation_member,
-                          &register_emu);
+                          &register_emu, &i);
     }
   }
 
@@ -39,7 +42,7 @@ void runScript(struct Program *program) {
 }
 
 void manageOperationType(struct OperationMember operation_member,
-                         struct RegisterEmu *register_emu) {
+                         struct RegisterEmu *register_emu, size_t *i) {
   int64_t value;
 
   if (operation_member.operation_type == Push ||
@@ -64,7 +67,7 @@ void manageOperationType(struct OperationMember operation_member,
              operation_member.operation_type == Jnl ||
              operation_member.operation_type == Jle ||
              operation_member.operation_type == Jnle) {
-    manageIdentifierAsADest(operation_member, register_emu);
+    manageIdentifierAsADest(operation_member, register_emu, i);
   } else if (operation_member.operation_type == Mov ||
              operation_member.operation_type == Add ||
              operation_member.operation_type == Cmp ||
@@ -140,16 +143,18 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
 }
 
 void manageIdentifierAsADest(struct OperationMember operation_member,
-                             struct RegisterEmu *register_emu) {
-  // TODO: SOON WITH THE LINKED LIST
-}
+                             struct RegisterEmu *register_emu, size_t *i) {}
 
 void manageDestSrc(struct OperationMember operation_member,
                    struct RegisterEmu *register_emu) {
+  SET_ZERO_FLAGS(register_emu->flags)
 
   if (operation_member.src_type == StringType &&
       operation_member.operation_type == Equ) {
     pushMemory(operation_member, register_emu);
+    return;
+  } else if (operation_member.operation_type == Cmp) {
+    cmpValue(operation_member, register_emu);
     return;
   } else if (operation_member.src_type == StringType &&
              operation_member.operation_type != Equ) {
@@ -196,8 +201,6 @@ void manageDestSrc(struct OperationMember operation_member,
     register_value = src_value;
   } else if (operation_member.operation_type == Add) {
     register_value += src_value;
-  } else if (operation_member.operation_type == Cmp) {
-    // SOON
   } else if (operation_member.operation_type == Or) {
     register_value |= src_value;
   } else if (operation_member.operation_type == Sub) {
@@ -210,14 +213,24 @@ void manageDestSrc(struct OperationMember operation_member,
     register_value ^= src_value;
   }
 
+  int64_t temp_check = 0;
+
   if (value.node_value_type == Int64) {
     *(int64_t *)value.node_value = register_value;
+    temp_check = *(int64_t *)value.node_value;
   } else if (value.node_value_type == Int32) {
     *(int32_t *)value.node_value = register_value;
+    temp_check = *(int32_t *)value.node_value;
   } else if (value.node_value_type == Int16) {
     *(int16_t *)value.node_value = register_value;
+    temp_check = *(int16_t *)value.node_value;
   } else if (value.node_value_type == Int8) {
     *(int8_t *)value.node_value = register_value;
+    temp_check = *(int8_t *)value.node_value;
+  }
+
+  if (temp_check != register_value) {
+    register_emu->flags.of = 1;
   }
 }
 
@@ -282,6 +295,73 @@ void pushMemory(struct OperationMember operation_member,
 
   addKeyValue(&register_emu->memory, operation_member.register_dest, value,
               value_type);
+}
+
+void cmpValue(struct OperationMember operation_member,
+              struct RegisterEmu *register_emu) {
+  struct NodeValue register_node =
+      getValue(&register_emu->hashmap, operation_member.register_dest);
+
+  if (register_node.node_value_type == Null) {
+    // TODO: HANDLE ERROR
+  }
+
+  int64_t value = 0;
+  int64_t register_value = 0;
+  struct NodeValue *src_value = NULL;
+
+  if (operation_member.src_type == StringType) {
+    // TODO: HANDLE ERROR
+  } else if (operation_member.src_type == IdentifierType) {
+    *src_value =
+        getValue(register_emu->symbol,
+                 operation_member.src_value.string_register_identifier);
+
+  } else if (operation_member.src_type == RegisterType) {
+    *src_value =
+        getValue(&register_emu->hashmap,
+                 operation_member.src_value.string_register_identifier);
+  }
+
+  if (src_value->node_value_type == Int64) {
+    value = *(int64_t *)src_value->node_value;
+  } else if (src_value->node_value_type == Int32) {
+    value = *(int32_t *)src_value->node_value;
+  } else if (src_value->node_value_type == Int16) {
+    value = *(int16_t *)src_value->node_value;
+  } else if (src_value->node_value_type == Int8) {
+    value = *(int8_t *)src_value->node_value;
+  } else {
+    // TODO: HANDLE ERROR
+  }
+
+  if (register_node.node_value_type == Int64) {
+    register_value = *(int64_t *)register_node.node_value;
+  } else if (register_node.node_value_type == Int32) {
+    register_value = *(int32_t *)register_node.node_value;
+  } else if (register_node.node_value_type == Int16) {
+    register_value = *(int16_t *)register_node.node_value;
+  } else if (register_node.node_value_type == Int8) {
+    register_value = *(int8_t *)register_node.node_value;
+  } else {
+    // TODO: HANDLE ERROR
+  }
+
+  if (register_value == 0 || register_value == value) {
+    register_emu->flags.zf = 1;
+  } else if (register_value > value) {
+    register_emu->flags.zf = 0;
+    register_emu->flags.sf = register_emu->flags.of;
+  } else if (register_value >= value) {
+    register_emu->flags.of = register_emu->flags.sf;
+  } else if (register_value < value) {
+    register_emu->flags.sf = 0;
+    register_emu->flags.of = 1;
+  } else if (register_value <= value) {
+    register_emu->flags.zf = 1;
+    register_emu->flags.sf = 0;
+    register_emu->flags.of = 1;
+  }
 }
 
 void doAllProcess(const char *file) {

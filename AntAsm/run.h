@@ -147,6 +147,13 @@
   addKeyValue(&register.hashmap, "r15w", (void *)&register.r15w, Int16);       \
   addKeyValue(&register.hashmap, "r15b", (void *)&register.r15b, Int8);
 
+#define SET_ZERO_FLAGS(flags)                                                  \
+  flags.of = 0;                                                                \
+  flags.sf = 0;                                                                \
+  flags.zf = 0;                                                                \
+  flags.cf = 0;                                                                \
+  flags.pf = 0;
+
 union StackNodeValue {
   int32_t value_32bit;
   int64_t value_64bit;
@@ -162,6 +169,14 @@ struct Stack {
   size_t last;
 
   struct StackNode *node;
+};
+
+struct Flags {
+  bool of;
+  bool sf;
+  bool zf;
+  bool cf;
+  bool pf;
 };
 
 struct RegisterEmu {
@@ -252,18 +267,20 @@ struct RegisterEmu {
   struct HashMap hashmap;
   struct Stack stack;
   struct HashMap memory;
+  struct HashMap *symbol;
+  struct Flags flags;
 };
 
 void runScript(struct Program *program);
 
 void manageOperationType(struct OperationMember operation_member,
-                         struct RegisterEmu *register_emu);
+                         struct RegisterEmu *register_emu, size_t *i);
 
 void manageOnlyRegisterDest(struct OperationMember operation_member,
                             struct RegisterEmu *register_emu);
 
 void manageIdentifierAsADest(struct OperationMember operation_member,
-                             struct RegisterEmu *register_emu);
+                             struct RegisterEmu *register_emu, size_t *i);
 
 void manageDestSrc(struct OperationMember operation_member,
                    struct RegisterEmu *register_emu);
@@ -275,6 +292,9 @@ void popStack(struct RegisterEmu *register_emu, int64_t *register_value,
 
 void pushMemory(struct OperationMember operation_member,
                 struct RegisterEmu *register_emu);
+
+void cmpValue(struct OperationMember operation_member,
+              struct RegisterEmu *register_emu);
 
 void doAllProcess(const char *file);
 
