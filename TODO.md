@@ -1,4 +1,4 @@
-- [ ] Label 
+- [x] Label 
 - [ ] Cmp, Jump
 - [ ] Syscall (Soon emulate the os)
 - [ ] REPL
