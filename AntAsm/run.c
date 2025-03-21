@@ -1,5 +1,6 @@
 #include "run.h"
 #include "ast.h"
+#include "bst.h"
 #include "file_utils.h"
 #include "hashmap.h"
 #include "lexer.h"
@@ -9,7 +10,6 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,7 +22,7 @@ void runScript(struct Program *program) {
       (struct StackNode *)malloc(sizeof(struct StackNode));
   register_emu.stack.last = 1;
   register_emu.memory = initHashMap(10);
-  register_emu.symbol = &program->member_list->symbol;
+  register_emu.symbol = program->member_list->symbol;
 
   for (size_t i = 0; i < program->size - 1; ++i) {
     struct MemberList member_list = program->member_list[i];
@@ -36,9 +36,7 @@ void runScript(struct Program *program) {
     }
   }
 
-  free(register_emu.hashmap.nodeList);
-  free(register_emu.stack.node);
-  free(register_emu.memory.nodeList);
+  freeRegister(&register_emu);
 }
 
 void manageOperationType(struct OperationMember operation_member,
@@ -79,7 +77,7 @@ void manageOperationType(struct OperationMember operation_member,
              operation_member.operation_type == Equ) {
     manageDestSrc(operation_member, register_emu);
   } else {
-    free(register_emu->hashmap.nodeList);
+    freeRegister(register_emu);
     throwError(INTERNAL_ERROR("Operation Type parsing"),
                operation_member.location.filename,
                operation_member.location.line_content,
@@ -105,8 +103,8 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
   } else if (value.node_value_type == Int8) {
     register_value = *(int8_t *)value.node_value;
   } else {
-    free(register_emu->hashmap.nodeList);
-    throwError(EXPECT_VALUE, operation_member.location.filename,
+    freeRegister(register_emu);
+    throwError(INCORRECT_VALUE, operation_member.location.filename,
                operation_member.location.line_content,
                operation_member.location.start.line,
                operation_member.location.start.column,
@@ -122,7 +120,7 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
   } else if (operation_member.operation_type == Pop) {
     popStack(register_emu, &register_value, operation_member);
   } else {
-    free(register_emu->hashmap.nodeList);
+    freeRegister(register_emu);
     throwError(7, "Other operation are not implemented yet",
                operation_member.location.filename,
                operation_member.location.line_content,
@@ -143,7 +141,34 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
 }
 
 void manageIdentifierAsADest(struct OperationMember operation_member,
-                             struct RegisterEmu *register_emu, size_t *i) {}
+                             struct RegisterEmu *register_emu, size_t *i) {
+  size_t line =
+      getValueBst(register_emu->symbol, operation_member.register_dest);
+
+  struct Flags flags = register_emu->flags;
+
+  if ((operation_member.operation_type == Jmp) ||
+      (operation_member.operation_type == Jo && flags.of) ||
+      (operation_member.operation_type == Jno && !flags.of) ||
+      (operation_member.operation_type == Jb && flags.cf) ||
+      (operation_member.operation_type == Jnb && !flags.cf) ||
+      (operation_member.operation_type == Jz && flags.zf) ||
+      (operation_member.operation_type == Jnz && !flags.zf) ||
+      (operation_member.operation_type == Jbe && (flags.cf || flags.zf)) ||
+      (operation_member.operation_type == Ja && !(flags.cf && flags.zf)) ||
+      (operation_member.operation_type == Js && flags.sf) ||
+      (operation_member.operation_type == Jns && !flags.sf) ||
+      (operation_member.operation_type == Jp && flags.pf) ||
+      (operation_member.operation_type == Jnp && !flags.pf) ||
+      (operation_member.operation_type == Jl && flags.sf != flags.of) ||
+      (operation_member.operation_type == Jnl && flags.sf == flags.of) ||
+      (operation_member.operation_type == Jle && flags.zf &&
+       flags.sf != flags.of) ||
+      (operation_member.operation_type == Jnle && !flags.zf &&
+       flags.sf == flags.of)) {
+    *i = line - 1;
+  }
+}
 
 void manageDestSrc(struct OperationMember operation_member,
                    struct RegisterEmu *register_emu) {
@@ -158,7 +183,12 @@ void manageDestSrc(struct OperationMember operation_member,
     return;
   } else if (operation_member.src_type == StringType &&
              operation_member.operation_type != Equ) {
-    // TODO:HANDLE ERROR
+    freeRegister(register_emu);
+    throwError(INCORRECT_VALUE, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   struct NodeValue value =
@@ -176,8 +206,8 @@ void manageDestSrc(struct OperationMember operation_member,
   } else if (value.node_value_type == Int8) {
     register_value = *(int8_t *)value.node_value;
   } else {
-    free(register_emu->hashmap.nodeList);
-    throwError(EXPECT_VALUE, operation_member.location.filename,
+    freeRegister(register_emu);
+    throwError(INCORRECT_VALUE, operation_member.location.filename,
                operation_member.location.line_content,
                operation_member.location.start.line,
                operation_member.location.start.column,
@@ -188,9 +218,9 @@ void manageDestSrc(struct OperationMember operation_member,
       operation_member.src_type == NumberType) {
     src_value = operation_member.src_value.hex_number;
   } else {
-    free(register_emu->hashmap.nodeList);
+    freeRegister(register_emu);
 
-    throwError(EXPECT_VALUE, operation_member.location.filename,
+    throwError(INCORRECT_VALUE, operation_member.location.filename,
                operation_member.location.line_content,
                operation_member.location.start.line,
                operation_member.location.start.column,
@@ -201,36 +231,29 @@ void manageDestSrc(struct OperationMember operation_member,
     register_value = src_value;
   } else if (operation_member.operation_type == Add) {
     register_value += src_value;
+    CHECK_IF_ADD_OVERFLOW(register_value, src_value, register_emu->flags)
   } else if (operation_member.operation_type == Or) {
     register_value |= src_value;
   } else if (operation_member.operation_type == Sub) {
     register_value -= src_value;
+    CHECK_IF_SUB_OVERFLOW(register_value, src_value, register_emu->flags)
   } else if (operation_member.operation_type == Imul) {
     register_value *= src_value;
+    CHECK_IF_MUL_OVERFLOW(register_value, src_value, register_emu->flags)
   } else if (operation_member.operation_type == And) {
     register_value &= src_value;
   } else if (operation_member.operation_type == Xor) {
     register_value ^= src_value;
   }
 
-  int64_t temp_check = 0;
-
   if (value.node_value_type == Int64) {
     *(int64_t *)value.node_value = register_value;
-    temp_check = *(int64_t *)value.node_value;
   } else if (value.node_value_type == Int32) {
     *(int32_t *)value.node_value = register_value;
-    temp_check = *(int32_t *)value.node_value;
   } else if (value.node_value_type == Int16) {
     *(int16_t *)value.node_value = register_value;
-    temp_check = *(int16_t *)value.node_value;
   } else if (value.node_value_type == Int8) {
     *(int8_t *)value.node_value = register_value;
-    temp_check = *(int8_t *)value.node_value;
-  }
-
-  if (temp_check != register_value) {
-    register_emu->flags.of = 1;
   }
 }
 
@@ -266,8 +289,7 @@ void popStack(struct RegisterEmu *register_emu, int64_t *register_value,
   } else if (node.byte_size == 8) {
     *register_value = node.value.value_64bit;
   } else {
-    free(stack->node);
-    free(register_emu->hashmap.nodeList);
+    freeRegister(register_emu);
     throwError(INTERNAL_ERROR("Error with the stack node bit size"),
                operation_member.location.filename,
                operation_member.location.line_content,
@@ -290,7 +312,12 @@ void pushMemory(struct OperationMember operation_member,
     value = (void *)operation_member.src_value.string_register_identifier;
     value_type = String;
   } else {
-    // TODO: HANDLE ERROR
+    freeRegister(register_emu);
+    throwError(INCORRECT_VALUE, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   addKeyValue(&register_emu->memory, operation_member.register_dest, value,
@@ -303,7 +330,12 @@ void cmpValue(struct OperationMember operation_member,
       getValue(&register_emu->hashmap, operation_member.register_dest);
 
   if (register_node.node_value_type == Null) {
-    // TODO: HANDLE ERROR
+    freeRegister(register_emu);
+    throwError(EXPECT_REGISTER, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   int64_t value = 0;
@@ -311,11 +343,16 @@ void cmpValue(struct OperationMember operation_member,
   struct NodeValue *src_value = NULL;
 
   if (operation_member.src_type == StringType) {
-    // TODO: HANDLE ERROR
+    freeRegister(register_emu);
+    throwError(INCORRECT_VALUE, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   } else if (operation_member.src_type == IdentifierType) {
-    *src_value =
-        getValue(register_emu->symbol,
-                 operation_member.src_value.string_register_identifier);
+    *(int32_t *)src_value =
+        getValueBst(register_emu->symbol,
+                    operation_member.src_value.string_register_identifier);
 
   } else if (operation_member.src_type == RegisterType) {
     *src_value =
@@ -332,7 +369,12 @@ void cmpValue(struct OperationMember operation_member,
   } else if (src_value->node_value_type == Int8) {
     value = *(int8_t *)src_value->node_value;
   } else {
-    // TODO: HANDLE ERROR
+    freeRegister(register_emu);
+    throwError(INCORRECT_VALUE, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   if (register_node.node_value_type == Int64) {
@@ -344,7 +386,12 @@ void cmpValue(struct OperationMember operation_member,
   } else if (register_node.node_value_type == Int8) {
     register_value = *(int8_t *)register_node.node_value;
   } else {
-    // TODO: HANDLE ERROR
+    freeRegister(register_emu);
+    throwError(INCORRECT_VALUE, operation_member.location.filename,
+               operation_member.location.line_content,
+               operation_member.location.start.line,
+               operation_member.location.start.column,
+               operation_member.location.end.column);
   }
 
   if (register_value == 0 || register_value == value) {
@@ -362,6 +409,13 @@ void cmpValue(struct OperationMember operation_member,
     register_emu->flags.sf = 0;
     register_emu->flags.of = 1;
   }
+}
+
+void freeRegister(struct RegisterEmu *register_emu) {
+  free(register_emu->hashmap.nodeList);
+  free(register_emu->stack.node);
+  free(register_emu->memory.nodeList);
+  freeBst(register_emu->symbol);
 }
 
 void doAllProcess(const char *file) {

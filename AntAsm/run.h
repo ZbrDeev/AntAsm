@@ -2,6 +2,7 @@
 #define RUN_H
 
 #include "ast.h"
+#include "bst.h"
 #include "hashmap.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -147,6 +148,30 @@
   addKeyValue(&register.hashmap, "r15w", (void *)&register.r15w, Int16);       \
   addKeyValue(&register.hashmap, "r15b", (void *)&register.r15b, Int8);
 
+#define CHECK_IF_ADD_OVERFLOW(a, b, flags)                                     \
+  if (__builtin_add_overflow_p(a, b, (int64_t)a) ||                            \
+      __builtin_add_overflow_p(a, b, (int32_t)a) ||                            \
+      __builtin_add_overflow_p(a, b, (int16_t)a) ||                            \
+      __builtin_add_overflow_p(a, b, (int8_t)a)) {                             \
+    flags.of = 1;                                                              \
+  }
+
+#define CHECK_IF_SUB_OVERFLOW(a, b, flags)                                     \
+  if (__builtin_sub_overflow_p(a, b, (int64_t)a) ||                            \
+      __builtin_sub_overflow_p(a, b, (int32_t)a) ||                            \
+      __builtin_sub_overflow_p(a, b, (int16_t)a) ||                            \
+      __builtin_sub_overflow_p(a, b, (int8_t)a)) {                             \
+    flags.of = 1;                                                              \
+  }
+
+#define CHECK_IF_MUL_OVERFLOW(a, b, flags)                                     \
+  if (__builtin_mul_overflow_p(a, b, (int64_t)a) ||                            \
+      __builtin_mul_overflow_p(a, b, (int32_t)a) ||                            \
+      __builtin_mul_overflow_p(a, b, (int16_t)a) ||                            \
+      __builtin_mul_overflow_p(a, b, (int8_t)a)) {                             \
+    flags.of = 1;                                                              \
+  }
+
 #define SET_ZERO_FLAGS(flags)                                                  \
   flags.of = 0;                                                                \
   flags.sf = 0;                                                                \
@@ -267,7 +292,7 @@ struct RegisterEmu {
   struct HashMap hashmap;
   struct Stack stack;
   struct HashMap memory;
-  struct HashMap *symbol;
+  struct Bst *symbol;
   struct Flags flags;
 };
 
@@ -295,6 +320,8 @@ void pushMemory(struct OperationMember operation_member,
 
 void cmpValue(struct OperationMember operation_member,
               struct RegisterEmu *register_emu);
+
+void freeRegister(struct RegisterEmu *register_emu);
 
 void doAllProcess(const char *file);
 

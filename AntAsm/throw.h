@@ -10,6 +10,7 @@
 #define EXPECT_SEMICOLON 4, "Expect semicolon ':'"
 #define EXPECT_REGISTER 5, "Expect register"
 #define EXPECT_COMMA 6, "Expect comma ','"
+#define INCORRECT_VALUE 7, "Incorrect value"
 
 #define STRING_NOT_IMPLEMENTED_YET 100, "String are not implemented yet"
 

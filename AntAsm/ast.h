@@ -1,6 +1,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include "bst.h"
 #include "hashmap.h"
 #include <stdint.h>
 
@@ -93,10 +94,9 @@ enum MemberListEnum {
 
 struct MemberList {
   enum MemberListEnum member_list_type;
-
   union MemberListUnion member_list;
 
-  struct HashMap symbol;
+  struct Bst *symbol;
 };
 
 struct Program {

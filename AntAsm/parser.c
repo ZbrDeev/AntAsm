@@ -1,6 +1,6 @@
 #include "parser.h"
 #include "ast.h"
-#include "hashmap.h"
+#include "bst.h"
 #include "lexer.h"
 #include "throw.h"
 #include "token.h"
@@ -149,6 +149,10 @@ struct Program parse(struct TokenArray *token_array) {
   struct Program ast;
   ast.size = 1;
   ast.member_list = (struct MemberList *)malloc(sizeof(struct MemberList));
+  ast.member_list->symbol = (struct Bst *)malloc(sizeof(struct Bst));
+  ast.member_list->symbol->sum_of_utf_key = 0;
+  ast.member_list->symbol->left = NULL;
+  ast.member_list->symbol->right = NULL;
 
   for (size_t i = 0; i < token_array->size; ++i) {
     struct Token token = token_array->tokens[i];
@@ -215,9 +219,8 @@ struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i,
 
   label_member.location.end = label_member.operation_member.location.end;
 
-  int32_t hash_value_32bit = *i;
-  addKeyValue(&member_list->symbol, label_member.label_name,
-              (void *)&hash_value_32bit, Int32);
+  addKeyValueBst(member_list->symbol, label_member.label_name,
+                 label_member.location.start.line - 1);
 
   return label_member;
 }
@@ -270,10 +273,6 @@ void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
                             struct OperationMember *operation_member,
                             struct MemberList *member_list) {
   struct Token token = token_array->tokens[i];
-
-  if (token.type != Register) {
-    throwAndFreeToken(EXPECT_REGISTER, &freeToken, token_array, i, member_list);
-  }
 
   operation_member->register_dest = token.value;
   operation_member->src_type = NullType;
