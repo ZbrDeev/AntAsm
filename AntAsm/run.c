@@ -100,8 +100,11 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
     register_value = *(int32_t *)value.node_value;
   } else if (value.node_value_type == Int16) {
     register_value = *(int16_t *)value.node_value;
-  } else if (value.node_value_type == Int8) {
+  } else if (value.node_value_type == Int8 ||
+             value.node_value_type == Int8_Low) {
     register_value = *(int8_t *)value.node_value;
+  } else if (value.node_value_type == Int8_High) {
+    register_value = ((int8_t *)value.node_value)[1];
   } else {
     freeRegister(register_emu);
     throwError(INCORRECT_VALUE, operation_member.location.filename,
@@ -135,8 +138,11 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
     *(int32_t *)value.node_value = register_value;
   } else if (value.node_value_type == Int16) {
     *(int16_t *)value.node_value = register_value;
-  } else if (value.node_value_type == Int8) {
+  } else if (value.node_value_type == Int8 ||
+             value.node_value_type == Int8_Low) {
     *(int8_t *)value.node_value = register_value;
+  } else if (value.node_value_type == Int8_High) {
+    ((int8_t *)value.node_value)[1] = (int8_t)register_value;
   }
 }
 
@@ -203,8 +209,11 @@ void manageDestSrc(struct OperationMember operation_member,
     register_value = *(int32_t *)value.node_value;
   } else if (value.node_value_type == Int16) {
     register_value = *(int16_t *)value.node_value;
-  } else if (value.node_value_type == Int8) {
-    register_value = *(int8_t *)value.node_value;
+  } else if (value.node_value_type == Int8 ||
+             value.node_value_type == Int8_Low) {
+    register_value = ((int8_t *)value.node_value)[0];
+  } else if (value.node_value_type == Int8_High) {
+    register_value = ((int8_t *)value.node_value)[1];
   } else {
     freeRegister(register_emu);
     throwError(INCORRECT_VALUE, operation_member.location.filename,
@@ -252,8 +261,11 @@ void manageDestSrc(struct OperationMember operation_member,
     *(int32_t *)value.node_value = register_value;
   } else if (value.node_value_type == Int16) {
     *(int16_t *)value.node_value = register_value;
-  } else if (value.node_value_type == Int8) {
+  } else if (value.node_value_type == Int8 ||
+             value.node_value_type == Int8_Low) {
     *(int8_t *)value.node_value = register_value;
+  } else if (value.node_value_type == Int8_High) {
+    ((int8_t *)value.node_value)[1] = (int8_t)register_value;
   }
 }
 
@@ -366,7 +378,9 @@ void cmpValue(struct OperationMember operation_member,
     value = *(int32_t *)src_value->node_value;
   } else if (src_value->node_value_type == Int16) {
     value = *(int16_t *)src_value->node_value;
-  } else if (src_value->node_value_type == Int8) {
+  } else if (src_value->node_value_type == Int8 ||
+             src_value->node_value_type == Int8_Low ||
+             src_value->node_value_type == Int8_High) {
     value = *(int8_t *)src_value->node_value;
   } else {
     freeRegister(register_emu);
@@ -383,8 +397,11 @@ void cmpValue(struct OperationMember operation_member,
     register_value = *(int32_t *)register_node.node_value;
   } else if (register_node.node_value_type == Int16) {
     register_value = *(int16_t *)register_node.node_value;
-  } else if (register_node.node_value_type == Int8) {
+  } else if (register_node.node_value_type == Int8 ||
+             register_node.node_value_type == Int8_Low) {
     register_value = *(int8_t *)register_node.node_value;
+  } else if (register_node.node_value_type == Int8_High) {
+    register_value = ((int8_t *)register_node.node_value)[1];
   } else {
     freeRegister(register_emu);
     throwError(INCORRECT_VALUE, operation_member.location.filename,
@@ -412,7 +429,7 @@ void cmpValue(struct OperationMember operation_member,
 }
 
 void freeRegister(struct RegisterEmu *register_emu) {
-  free(register_emu->hashmap.nodeList);
+  freeHashMap(&register_emu->hashmap);
   free(register_emu->stack.node);
   free(register_emu->memory.nodeList);
   freeBst(register_emu->symbol);

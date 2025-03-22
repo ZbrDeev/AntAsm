@@ -1,4 +1,5 @@
 #include "hashmap.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -17,17 +18,16 @@ struct HashMap initHashMap(unsigned int capacity) {
   struct HashMap hashmap;
 
   hashmap.capacity = capacity;
-  hashmap.nodeList = (struct Node *)malloc(capacity * sizeof(struct Node));
+  hashmap.nodeList = (struct Node **)malloc(capacity * sizeof(struct Node *));
 
   for (size_t i = 0; i < capacity; ++i) {
-    hashmap.nodeList[i].next = NULL;
-    hashmap.nodeList[i].is_empty = true;
+    hashmap.nodeList[i] = NULL;
   }
 
   return hashmap;
 }
 
-static struct NodeValue navigateIntoNode(struct Node *node, const char *key) {
+struct NodeValue navigateIntoNode(struct Node *node, const char *key) {
   struct Node *node_it = node;
 
   while (node_it->next != NULL) {
@@ -51,34 +51,59 @@ struct NodeValue getValue(struct HashMap *hashmap, const char *key) {
   int sum_of_key = stringToSum(key);
   int index = CALC_KEY_INDEX(sum_of_key, hashmap->capacity);
 
-  struct Node node = hashmap->nodeList[index];
+  struct Node *node = hashmap->nodeList[index];
 
-  if (node.is_empty) {
-    return node.value;
+  while (node != NULL) {
+    if (strcmp(key, node->key) == 0) {
+      return node->value;
+    }
+
+    node = node->next;
   }
 
-  return navigateIntoNode(&node, key);
+  struct NodeValue node_null_value = {.node_value_type = Null,
+                                      .node_value = NULL};
+  return node_null_value;
 }
 
 void addKeyValue(struct HashMap *hashmap, const char *key, void *value_ptr,
                  const enum NodeValueType value_type) {
   struct NodeValue value = {.node_value = value_ptr,
                             .node_value_type = value_type};
-  struct Node node = {
-      .key = key, .value = value, .is_empty = false, .next = NULL};
+  struct Node *new_node = (struct Node *)malloc(sizeof(struct Node));
+  new_node->key = key;
+  new_node->value.node_value = value_ptr;
+  new_node->value.node_value_type = value_type;
+  new_node->next = NULL;
+
   int sum_of_key = stringToSum(key);
   int index = CALC_KEY_INDEX(sum_of_key, hashmap->capacity);
 
-  struct Node *node_it = &hashmap->nodeList[index];
+  if (hashmap->nodeList[index] == NULL) {
+    hashmap->nodeList[index] = new_node;
+  } else {
 
-  if (node_it->is_empty) {
-    *node_it = node;
-    return;
+    new_node->next = hashmap->nodeList[index];
+    hashmap->nodeList[index] = new_node;
+  }
+}
+
+void freeHashMap(struct HashMap *hashmap) {
+  for (size_t i = 0; i < hashmap->capacity; ++i) {
+    if (hashmap->nodeList[i] != NULL) {
+      freeNode(hashmap->nodeList[i]);
+    }
   }
 
-  while (node_it->next != NULL) {
-    node_it = node_it->next;
-  }
+  free(hashmap->nodeList);
+}
 
-  node_it->next = &node;
+void freeNode(struct Node *node) {
+  struct Node *tmp;
+
+  while (node != NULL) {
+    tmp = node;
+    node = node->next;
+    free(tmp);
+  }
 }
