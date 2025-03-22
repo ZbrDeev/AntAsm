@@ -93,7 +93,7 @@ int intStringToInt(struct TokenArray *token_array, size_t i) {
 }
 
 int hexStringToInt(struct TokenArray *token_array, size_t i,
-                   const char *line_content, struct MemberList *member_list) {
+                   struct MemberList *member_list) {
   struct Token token = token_array->tokens[i];
   const char *hex_without_prefix = &token.value[2];
   size_t size = strlen(hex_without_prefix);
@@ -103,11 +103,11 @@ int hexStringToInt(struct TokenArray *token_array, size_t i,
     int ascii_code = 0;
 
     if (hex_without_prefix[i] >= '0' && hex_without_prefix[i] <= '9') {
-      ascii_code = hex_without_prefix[i] & 0xcf + 9;
+      ascii_code = (hex_without_prefix[i] & 0xcf) + 9;
     } else if (hex_without_prefix[i] >= 'a' && hex_without_prefix[i] <= 'f') {
-      ascii_code = hex_without_prefix[i] & 0xbf + 9;
+      ascii_code = (hex_without_prefix[i] & 0xbf) + 9;
     } else if (hex_without_prefix[i] >= 'A' && hex_without_prefix[i] <= 'F') {
-      ascii_code = hex_without_prefix[i] & 0x9f + 9;
+      ascii_code = (hex_without_prefix[i] & 0x9f) + 9;
     } else {
       throwAndFreeToken(EXPECT_VALUE, &freeToken, token_array, i, member_list);
     }
@@ -132,8 +132,8 @@ void literalToValueType(struct OperationMember *operation_member,
     operation_member->src_value.hex_number = intStringToInt(token_array, i);
   } else if (token_type == LiteralHex) {
     operation_member->src_type = HexType;
-    operation_member->src_value.hex_number = hexStringToInt(
-        token_array, i, operation_member->location.line_content, member_list);
+    operation_member->src_value.hex_number =
+        hexStringToInt(token_array, i, member_list);
   } else if (token_type == Register) {
     operation_member->src_type = RegisterType;
     operation_member->src_value.string_register_identifier = token.value;
@@ -261,7 +261,7 @@ struct OperationMember parseOperationMember(struct TokenArray *token_array,
       operation_member.operation_type == Jnl ||
       operation_member.operation_type == Jle ||
       operation_member.operation_type == Jnle) {
-    parseOnlyDestOperation(token_array, *i, &operation_member, member_list);
+    parseOnlyDestOperation(token_array, *i, &operation_member);
   } else {
     parseSrcDestOperation(token_array, i, &operation_member, member_list);
   }
@@ -270,8 +270,7 @@ struct OperationMember parseOperationMember(struct TokenArray *token_array,
 }
 
 void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
-                            struct OperationMember *operation_member,
-                            struct MemberList *member_list) {
+                            struct OperationMember *operation_member) {
   struct Token token = token_array->tokens[i];
 
   operation_member->register_dest = token.value;

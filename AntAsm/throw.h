@@ -24,7 +24,8 @@ enum ErrorType {
 };
 
 void printError(int status, const char *reason, const char *filename,
-                const char *line_content, int line, int start, int end);
+                const char *line_content, size_t line, size_t start,
+                size_t end);
 
 void throwError(int status, const char *reason, const char *filename,
                 const char *line_content, int line, int start, int end);

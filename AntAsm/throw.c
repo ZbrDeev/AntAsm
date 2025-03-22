@@ -4,7 +4,8 @@
 #include <string.h>
 
 void printError(int status, const char *reason, const char *filename,
-                const char *line_content, int line, int start, int end) {
+                const char *line_content, size_t line, size_t start,
+                size_t end) {
   const char *error_title;
 
   if (status < 100) {
@@ -15,11 +16,11 @@ void printError(int status, const char *reason, const char *filename,
     error_title = "Internal error";
   }
 
-  printf("\033[1;38;5;196m Error:\033[0m \033[1m%s:%d:%d:\033[0m %s\n",
+  printf("\033[1;38;5;196m Error:\033[0m \033[1m%s:%ld:%ld:\033[0m %s\n",
          filename, line, start, error_title);
 
   printf("  |\n");
-  printf("\033[33m%d\033[0m | ", line);
+  printf("\033[33m%ld\033[0m | ", line);
 
   size_t line_size = strlen(line_content);
   char *error_arrow = (char *)malloc(line_size + 1);

@@ -9,7 +9,7 @@ enum OperationType stringToOperationType(const char *string);
 int intStringToInt(struct TokenArray *token_array, size_t i);
 
 int hexStringToInt(struct TokenArray *token_array, size_t i,
-                   const char *line_content, struct MemberList *member_list);
+                   struct MemberList *member_list);
 
 void literalToValueType(struct OperationMember *operation_member,
                         struct TokenArray *token_array, size_t i,
@@ -25,8 +25,7 @@ struct OperationMember parseOperationMember(struct TokenArray *token_array,
                                             struct MemberList *member_list);
 
 void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
-                            struct OperationMember *operation_member,
-                            struct MemberList *member_list);
+                            struct OperationMember *operation_member);
 
 void parseSrcDestOperation(struct TokenArray *token_array, size_t *i,
                            struct OperationMember *operation_member,

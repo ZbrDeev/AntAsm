@@ -6,8 +6,8 @@
 #include <stdint.h>
 
 struct Position {
-  unsigned int line;
-  unsigned int column;
+  size_t line;
+  size_t column;
 };
 
 struct SourceLocation {
@@ -100,7 +100,7 @@ struct MemberList {
 };
 
 struct Program {
-  unsigned int size;
+  size_t size;
 
   struct MemberList *member_list;
 };

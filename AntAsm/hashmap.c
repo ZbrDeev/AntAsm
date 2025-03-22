@@ -68,8 +68,6 @@ struct NodeValue getValue(struct HashMap *hashmap, const char *key) {
 
 void addKeyValue(struct HashMap *hashmap, const char *key, void *value_ptr,
                  const enum NodeValueType value_type) {
-  struct NodeValue value = {.node_value = value_ptr,
-                            .node_value_type = value_type};
   struct Node *new_node = (struct Node *)malloc(sizeof(struct Node));
   new_node->key = key;
   new_node->value.node_value = value_ptr;

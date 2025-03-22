@@ -41,8 +41,6 @@ void runScript(struct Program *program) {
 
 void manageOperationType(struct OperationMember operation_member,
                          struct RegisterEmu *register_emu, size_t *i) {
-  int64_t value;
-
   if (operation_member.operation_type == Push ||
       operation_member.operation_type == Pop ||
       operation_member.operation_type == Inc ||
@@ -226,6 +224,12 @@ void manageDestSrc(struct OperationMember operation_member,
   if (operation_member.src_type == HexType ||
       operation_member.src_type == NumberType) {
     src_value = operation_member.src_value.hex_number;
+  } else if (operation_member.src_type == RegisterType) {
+    struct NodeValue register_src_value =
+        getValue(&register_emu->hashmap,
+                 operation_member.src_value.string_register_identifier);
+
+    src_value = *(int64_t *)register_src_value.node_value;
   } else {
     freeRegister(register_emu);
 
@@ -240,15 +244,18 @@ void manageDestSrc(struct OperationMember operation_member,
     register_value = src_value;
   } else if (operation_member.operation_type == Add) {
     register_value += src_value;
-    CHECK_IF_ADD_OVERFLOW(register_value, src_value, register_emu->flags)
+    CHECK_IF_ADD_OVERFLOW(register_value, src_value, register_emu->flags,
+                          value.node_value_type)
   } else if (operation_member.operation_type == Or) {
     register_value |= src_value;
   } else if (operation_member.operation_type == Sub) {
     register_value -= src_value;
-    CHECK_IF_SUB_OVERFLOW(register_value, src_value, register_emu->flags)
+    CHECK_IF_SUB_OVERFLOW(register_value, src_value, register_emu->flags,
+                          value.node_value_type)
   } else if (operation_member.operation_type == Imul) {
     register_value *= src_value;
-    CHECK_IF_MUL_OVERFLOW(register_value, src_value, register_emu->flags)
+    CHECK_IF_MUL_OVERFLOW(register_value, src_value, register_emu->flags,
+                          value.node_value_type)
   } else if (operation_member.operation_type == And) {
     register_value &= src_value;
   } else if (operation_member.operation_type == Xor) {

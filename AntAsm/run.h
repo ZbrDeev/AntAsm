@@ -96,27 +96,30 @@
   addKeyValue(&register.hashmap, "r15w", (void *)&register.reg_15, Int16);     \
   addKeyValue(&register.hashmap, "r15b", (void *)&register.reg_15, Int8);
 
-#define CHECK_IF_ADD_OVERFLOW(a, b, flags)                                     \
-  if (__builtin_add_overflow_p(a, b, (int64_t)a) ||                            \
-      __builtin_add_overflow_p(a, b, (int32_t)a) ||                            \
-      __builtin_add_overflow_p(a, b, (int16_t)a) ||                            \
-      __builtin_add_overflow_p(a, b, (int8_t)a)) {                             \
+#define CHECK_IF_ADD_OVERFLOW(a, b, flags, type)                               \
+  if ((type == Int64 && __builtin_add_overflow_p(a, b, (int64_t)a)) ||         \
+      (type == Int32 && __builtin_add_overflow_p(a, b, (int32_t)a)) ||         \
+      (type == Int16 && __builtin_add_overflow_p(a, b, (int16_t)a)) ||         \
+      ((type == Int8 || type == Int8_Low || type == Int8_High) &&              \
+       __builtin_add_overflow_p(a, b, (int8_t)a))) {                           \
     flags.of = 1;                                                              \
   }
 
-#define CHECK_IF_SUB_OVERFLOW(a, b, flags)                                     \
-  if (__builtin_sub_overflow_p(a, b, (int64_t)a) ||                            \
-      __builtin_sub_overflow_p(a, b, (int32_t)a) ||                            \
-      __builtin_sub_overflow_p(a, b, (int16_t)a) ||                            \
-      __builtin_sub_overflow_p(a, b, (int8_t)a)) {                             \
+#define CHECK_IF_SUB_OVERFLOW(a, b, flags, type)                               \
+  if ((type == Int64 && __builtin_sub_overflow_p(a, b, (int64_t)a)) ||         \
+      (type == Int32 && __builtin_sub_overflow_p(a, b, (int32_t)a)) ||         \
+      (type == Int16 && __builtin_sub_overflow_p(a, b, (int16_t)a)) ||         \
+      ((type == Int8 || type == Int8_Low || type == Int8_High) &&              \
+       __builtin_sub_overflow_p(a, b, (int8_t)a))) {                           \
     flags.of = 1;                                                              \
   }
 
-#define CHECK_IF_MUL_OVERFLOW(a, b, flags)                                     \
-  if (__builtin_mul_overflow_p(a, b, (int64_t)a) ||                            \
-      __builtin_mul_overflow_p(a, b, (int32_t)a) ||                            \
-      __builtin_mul_overflow_p(a, b, (int16_t)a) ||                            \
-      __builtin_mul_overflow_p(a, b, (int8_t)a)) {                             \
+#define CHECK_IF_MUL_OVERFLOW(a, b, flags, type)                               \
+  if ((type == Int64 && __builtin_mul_overflow_p(a, b, (int64_t)a)) ||         \
+      (type == Int32 && __builtin_mul_overflow_p(a, b, (int32_t)a)) ||         \
+      (type == Int16 && __builtin_mul_overflow_p(a, b, (int16_t)a)) ||         \
+      ((type == Int8 || type == Int8_Low || type == Int8_High) &&              \
+       __builtin_mul_overflow_p(a, b, (int8_t)a))) {                           \
     flags.of = 1;                                                              \
   }
 
@@ -175,6 +178,8 @@ struct RegisterEmu {
   struct HashMap memory;
   struct Bst *symbol;
   struct Flags flags;
+
+  bool exit;
 };
 
 void runScript(struct Program *program);
