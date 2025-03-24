@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void runScript(struct Program *program) {
+int runScript(struct Program *program) {
   struct RegisterEmu register_emu;
   INIT_REGISTER_EMU(register_emu)
   INIT_HASHMAP_REGISTER_EMU(register_emu)
@@ -24,6 +24,7 @@ void runScript(struct Program *program) {
   register_emu.stack.last = 1;
   register_emu.memory = NULL;
   register_emu.symbol = program->member_list->symbol;
+  int status_code = 0;
 
   for (size_t i = 0; i < program->size - 1; ++i) {
     struct MemberList member_list = program->member_list[i];
@@ -35,9 +36,15 @@ void runScript(struct Program *program) {
       manageOperationType(member_list.member_list.label_member.operation_member,
                           &register_emu, &i);
     }
+
+    if (register_emu.exit) {
+      status_code = register_emu.reg_DI;
+    }
   }
 
   freeRegister(&register_emu);
+
+  return status_code;
 }
 
 void manageOperationType(struct OperationMember operation_member,
@@ -60,8 +67,7 @@ void manageOperationType(struct OperationMember operation_member,
     }
 
     if (register_emu->exit) {
-      freeRegister(register_emu);
-      exit(register_emu->reg_DI);
+      return;
     }
   } else if (operation_member.operation_type == Push ||
              operation_member.operation_type == Pop ||
@@ -467,7 +473,7 @@ void freeRegister(struct RegisterEmu *register_emu) {
   freeBst(register_emu->symbol);
 }
 
-void doAllProcess(const char *file) {
+int doAllProcess(const char *file) {
   char *file_content = readFile(file);
   size_t file_size = strlen(file_content);
 
@@ -479,8 +485,10 @@ void doAllProcess(const char *file) {
 
   struct Program program = parse(&token);
 
-  runScript(&program);
+  int status_code = runScript(&program);
 
   free(program.member_list);
   freeToken(&token);
+
+  return status_code;
 }

@@ -23,7 +23,8 @@
   register.reg_12 = 0;                                                         \
   register.reg_13 = 0;                                                         \
   register.reg_14 = 0;                                                         \
-  register.reg_15 = 0;
+  register.reg_15 = 0;                                                         \
+  register.exit = 0;
 
 #define INIT_HASHMAP_REGISTER_EMU(register)                                    \
   register.hashmap = initHashMap(10);                                          \
@@ -182,7 +183,7 @@ struct RegisterEmu {
   bool exit;
 };
 
-void runScript(struct Program *program);
+int runScript(struct Program *program);
 
 void manageOperationType(struct OperationMember operation_member,
                          struct RegisterEmu *register_emu, size_t *i);
@@ -209,6 +210,6 @@ void cmpValue(struct OperationMember operation_member,
 
 void freeRegister(struct RegisterEmu *register_emu);
 
-void doAllProcess(const char *file);
+int doAllProcess(const char *file);
 
 #endif // RUN_H
