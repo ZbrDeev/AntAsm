@@ -6,21 +6,21 @@
 
 struct Bst {
   size_t sum_of_utf_key;
-  const char *key;
   size_t value;
+  char *string_value;
 
   struct Bst *left;
   struct Bst *right;
 };
 
-size_t calcStringUtf(const char *value);
+size_t calcStringUtf(char *value);
 
-struct Bst *preorderTraversal(struct Bst *bst, size_t sum_of_key,
-                              bool add_node);
+struct Bst *createBstNode(size_t sum_of_key, size_t value, char *string_value);
 
-void addKeyValueBst(struct Bst *bst, const char *key, size_t value);
+void addKeyValueBst(struct Bst **bst, size_t sum_of_key, size_t value,
+                    char *string_value);
 
-size_t getValueBst(struct Bst *bst, const char *key);
+struct Bst *getValueBst(struct Bst *bst, size_t sum_of_key);
 
 void freeBst(struct Bst *bst);
 
