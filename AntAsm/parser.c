@@ -72,6 +72,8 @@ enum OperationType stringToOperationType(const char *string) {
     operation_type = Jnle;
   } else if (strcmp(string, "equ") == 0) {
     operation_type = Equ;
+  } else if (strcmp(string, "syscall") == 0) {
+    operation_type = Syscall;
   } else {
     assert(false);
   }
@@ -149,27 +151,28 @@ struct Program parse(struct TokenArray *token_array) {
   struct Program ast;
   ast.size = 1;
   ast.member_list = (struct MemberList *)malloc(sizeof(struct MemberList));
-  ast.member_list->symbol = (struct Bst *)malloc(sizeof(struct Bst));
-  ast.member_list->symbol->sum_of_utf_key = 0;
-  ast.member_list->symbol->left = NULL;
-  ast.member_list->symbol->right = NULL;
+  ast.member_list->symbol = NULL;
 
   for (size_t i = 0; i < token_array->size; ++i) {
     struct Token token = token_array->tokens[i];
 
-    struct MemberList *temp = (struct MemberList *)realloc(
-        ast.member_list, (ast.size + 1) * sizeof(struct MemberList));
-
-    assert(temp != NULL);
-
-    ast.member_list = temp;
     if (token.type == Opcode) {
-      for (size_t j = 1; j <= 3; ++j) {
-        if (token_array->tokens[i + j].line <= 0) {
-          throwAndFreeToken(EXPECT_OPERAND, &freeToken, token_array, i,
-                            ast.member_list);
+      if (strcmp(token.value, "syscall") != 0) {
+        for (size_t j = 1; j <= 3; ++j) {
+          if (token_array->tokens[i + j].line <= 0) {
+            throwAndFreeToken(EXPECT_OPERAND, &freeToken, token_array, i,
+                              ast.member_list);
+          }
         }
       }
+
+      struct MemberList *temp = (struct MemberList *)realloc(
+          ast.member_list, (ast.size + 1) * sizeof(struct MemberList));
+
+      assert(temp != NULL);
+
+      ast.member_list = temp;
+
       ast.member_list[ast.size - 1].member_list_type = OperationMemberType;
       ast.member_list[ast.size - 1].member_list.operation_member =
           parseOperationMember(token_array, &i, ast.member_list);
@@ -219,8 +222,8 @@ struct LabelMember parseLabel(struct TokenArray *token_array, size_t *i,
 
   label_member.location.end = label_member.operation_member.location.end;
 
-  addKeyValueBst(member_list->symbol, label_member.label_name,
-                 label_member.location.start.line - 1);
+  addKeyValueBst(&member_list->symbol, calcStringUtf(label_member.label_name),
+                 label_member.location.start.line - 1, NULL);
 
   return label_member;
 }
@@ -237,6 +240,9 @@ struct OperationMember parseOperationMember(struct TokenArray *token_array,
 
   operation_member.operation_type =
       stringToOperationType(token_array->tokens[*i].value);
+  if (operation_member.operation_type == Syscall) {
+    return operation_member;
+  }
 
   ++*i;
 

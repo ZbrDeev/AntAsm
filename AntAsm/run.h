@@ -175,7 +175,7 @@ struct RegisterEmu {
 
   struct HashMap hashmap;
   struct Stack stack;
-  struct HashMap memory;
+  struct Bst *memory;
   struct Bst *symbol;
   struct Flags flags;
 

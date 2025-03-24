@@ -20,7 +20,8 @@
    strcmp(opcode, "jns") == 0 || strcmp(opcode, "jp") == 0 ||                  \
    strcmp(opcode, "jnp") == 0 || strcmp(opcode, "jl") == 0 ||                  \
    strcmp(opcode, "jnl") == 0 || strcmp(opcode, "jle") == 0 ||                 \
-   strcmp(opcode, "jnle") == 0 || strcmp(opcode, "equ") == 0)
+   strcmp(opcode, "jnle") == 0 || strcmp(opcode, "equ") == 0 ||                \
+   strcmp(opcode, "syscall") == 0)
 
 #define REGISTER_CMP(register)                                                 \
   (strcmp(register, "rax") == 0 || strcmp(register, "eax") == 0 ||             \

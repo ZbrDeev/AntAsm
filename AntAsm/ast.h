@@ -48,6 +48,7 @@ enum OperationType {
   Jle,
   Jnle,
   Equ,
+  Syscall,
 };
 
 enum ValueType {
@@ -61,13 +62,13 @@ enum ValueType {
 
 union ValueTypeUnion {
   int64_t hex_number;
-  const char *string_register_identifier;
+  char *string_register_identifier;
 };
 
 struct OperationMember {
   enum OperationType operation_type;
 
-  const char *register_dest;
+  char *register_dest;
   enum ValueType src_type;
   union ValueTypeUnion src_value;
 
@@ -75,7 +76,7 @@ struct OperationMember {
 };
 
 struct LabelMember {
-  const char *label_name;
+  char *label_name;
 
   struct OperationMember operation_member;
 

@@ -5,6 +5,7 @@
 #include "hashmap.h"
 #include "lexer.h"
 #include "parser.h"
+#include "syscall.h"
 #include "throw.h"
 #include "token.h"
 #include <assert.h>
@@ -21,7 +22,7 @@ void runScript(struct Program *program) {
   register_emu.stack.node =
       (struct StackNode *)malloc(sizeof(struct StackNode));
   register_emu.stack.last = 1;
-  register_emu.memory = initHashMap(10);
+  register_emu.memory = NULL;
   register_emu.symbol = program->member_list->symbol;
 
   for (size_t i = 0; i < program->size - 1; ++i) {
@@ -41,10 +42,31 @@ void runScript(struct Program *program) {
 
 void manageOperationType(struct OperationMember operation_member,
                          struct RegisterEmu *register_emu, size_t *i) {
-  if (operation_member.operation_type == Push ||
-      operation_member.operation_type == Pop ||
-      operation_member.operation_type == Inc ||
-      operation_member.operation_type == Dec) {
+  if (operation_member.operation_type == Syscall) {
+    int error_code = 0;
+
+#if defined(__linux__)
+    error_code = callSyscallLinux(register_emu);
+#endif
+
+    if (error_code != 0) {
+      freeRegister(register_emu);
+      throwError(error_code, "Syscall error",
+                 operation_member.location.filename,
+                 operation_member.location.line_content,
+                 operation_member.location.start.line,
+                 operation_member.location.start.column,
+                 operation_member.location.end.column);
+    }
+
+    if (register_emu->exit) {
+      freeRegister(register_emu);
+      exit(register_emu->reg_DI);
+    }
+  } else if (operation_member.operation_type == Push ||
+             operation_member.operation_type == Pop ||
+             operation_member.operation_type == Inc ||
+             operation_member.operation_type == Dec) {
     manageOnlyRegisterDest(operation_member, register_emu);
   } else if (operation_member.operation_type == Jmp ||
              operation_member.operation_type == Jo ||
@@ -147,7 +169,9 @@ void manageOnlyRegisterDest(struct OperationMember operation_member,
 void manageIdentifierAsADest(struct OperationMember operation_member,
                              struct RegisterEmu *register_emu, size_t *i) {
   size_t line =
-      getValueBst(register_emu->symbol, operation_member.register_dest);
+      getValueBst(register_emu->symbol,
+                  calcStringUtf((char *)operation_member.register_dest))
+          ->value;
 
   struct Flags flags = register_emu->flags;
 
@@ -230,6 +254,9 @@ void manageDestSrc(struct OperationMember operation_member,
                  operation_member.src_value.string_register_identifier);
 
     src_value = *(int64_t *)register_src_value.node_value;
+  } else if (operation_member.src_type == IdentifierType) {
+    src_value =
+        calcStringUtf(operation_member.src_value.string_register_identifier);
   } else {
     freeRegister(register_emu);
 
@@ -320,16 +347,15 @@ void popStack(struct RegisterEmu *register_emu, int64_t *register_value,
 
 void pushMemory(struct OperationMember operation_member,
                 struct RegisterEmu *register_emu) {
-  void *value;
-  enum NodeValueType value_type;
-
   if (operation_member.src_type == NumberType ||
       operation_member.src_type == HexType) {
-    value = (void *)&operation_member.src_value.hex_number;
-    value_type = Int64;
+    addKeyValueBst(&register_emu->memory,
+                   calcStringUtf(operation_member.register_dest), 0, NULL);
+
   } else if (operation_member.src_type == StringType) {
-    value = (void *)operation_member.src_value.string_register_identifier;
-    value_type = String;
+    addKeyValueBst(&register_emu->memory,
+                   calcStringUtf(operation_member.register_dest), 0,
+                   operation_member.src_value.string_register_identifier);
   } else {
     freeRegister(register_emu);
     throwError(INCORRECT_VALUE, operation_member.location.filename,
@@ -338,9 +364,6 @@ void pushMemory(struct OperationMember operation_member,
                operation_member.location.start.column,
                operation_member.location.end.column);
   }
-
-  addKeyValue(&register_emu->memory, operation_member.register_dest, value,
-              value_type);
 }
 
 void cmpValue(struct OperationMember operation_member,
@@ -371,7 +394,9 @@ void cmpValue(struct OperationMember operation_member,
   } else if (operation_member.src_type == IdentifierType) {
     *(int32_t *)src_value =
         getValueBst(register_emu->symbol,
-                    operation_member.src_value.string_register_identifier);
+                    calcStringUtf(
+                        operation_member.src_value.string_register_identifier))
+            ->value;
 
   } else if (operation_member.src_type == RegisterType) {
     *src_value =
@@ -438,7 +463,7 @@ void cmpValue(struct OperationMember operation_member,
 void freeRegister(struct RegisterEmu *register_emu) {
   freeHashMap(&register_emu->hashmap);
   free(register_emu->stack.node);
-  free(register_emu->memory.nodeList);
+  freeBst(register_emu->memory);
   freeBst(register_emu->symbol);
 }
 
