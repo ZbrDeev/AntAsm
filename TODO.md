@@ -3,3 +3,4 @@
 - [/] Syscall (Soon emulate the os)
 - [ ] REPL
 - [ ] Debugging (with visualisation of register, stack, etc)
+- [ ] Fix memory leaks everywhere
