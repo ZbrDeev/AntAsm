@@ -1,6 +1,6 @@
 - [x] Label 
 - [x] Cmp, Jump
 - [/] Syscall (Soon emulate the os)
-- [ ] REPL
+- [/] REPL
 - [ ] Debugging (with visualisation of register, stack, etc)
 - [ ] Fix memory leaks everywhere

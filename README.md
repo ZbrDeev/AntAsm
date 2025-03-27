@@ -7,7 +7,6 @@ AntAsm is a lightweight and efficient x86_64 assembler interpreter written in C.
 - [x] **Interpretation of Assembly Code**: AntAsm can interpret simple assembly code and simulate its execution.
 - [ ] **Memory Simulation**: It provides a simulated memory environment where users can view and modify registers and memory.
 - [x] **Support for Basic Instructions**: AntAsm supports basic assembly instructions like mov, add, sub, jmp, and more.
-- [ ] **Step-by-Step Execution**: Allows stepwise execution of instructions to better understand how assembly code works.
 - [ ] **REPL Support**: AntAsm provides an interactive REPL for testing and executing assembly code in real-time.
 
 ## Installation
