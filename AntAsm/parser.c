@@ -147,11 +147,17 @@ void literalToValueType(struct OperationMember *operation_member,
   }
 }
 
-struct Program parse(struct TokenArray *token_array) {
+struct Program parse(struct TokenArray *token_array,
+                     struct Bst *symb_repl_bst) {
   struct Program ast;
   ast.size = 1;
   ast.member_list = (struct MemberList *)malloc(sizeof(struct MemberList));
-  ast.member_list->symbol = NULL;
+
+  if (symb_repl_bst != NULL) {
+    ast.member_list->symbol = symb_repl_bst;
+  } else {
+    ast.member_list->symbol = NULL;
+  }
 
   for (size_t i = 0; i < token_array->size; ++i) {
     struct Token token = token_array->tokens[i];

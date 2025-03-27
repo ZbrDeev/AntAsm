@@ -483,7 +483,7 @@ int doAllProcess(const char *file) {
   struct TokenArray token = lexer(&content_info);
   free(file_content);
 
-  struct Program program = parse(&token);
+  struct Program program = parse(&token, NULL);
 
   int status_code = runScript(&program);
 
