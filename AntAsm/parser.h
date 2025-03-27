@@ -6,7 +6,7 @@
 
 enum OperationType stringToOperationType(const char *string);
 
-int intStringToInt(struct TokenArray *token_array, size_t i);
+int intStringToInt(struct TokenArray *token_array, size_t index);
 
 int hexStringToInt(struct TokenArray *token_array, size_t i,
                    struct MemberList *member_list);

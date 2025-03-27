@@ -81,14 +81,28 @@ enum OperationType stringToOperationType(const char *string) {
   return operation_type;
 }
 
-int intStringToInt(struct TokenArray *token_array, size_t i) {
-  struct Token token = token_array->tokens[i];
+int intStringToInt(struct TokenArray *token_array, size_t index) {
+  struct Token token = token_array->tokens[index];
 
   size_t size = strlen(token.value);
   int result = 0;
 
-  for (size_t i = 0; i < size; ++i) {
+  size_t i = 0;
+  bool is_positive = true;
+
+  if(token.value[0] == '+'){
+    ++i;
+  }else if(token.value[0] == '-'){
+    is_positive = false;
+    ++i;
+  }
+
+  for (; i < size; ++i) {
     result += pow(10, size - i - 1) * (token.value[i] & 0xcf);
+  }
+
+  if(!is_positive && !result){
+    result = ~result+1;
   }
 
   return result;

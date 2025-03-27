@@ -26,7 +26,6 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
     if (is_comment && c == '\n') {
       is_comment = false;
-      continue;
     } else if (is_comment) {
       continue;
     }
@@ -76,7 +75,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       keyword_size = 0;
       continue;
     } else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-               (c >= '0' && c <= '9')) {
+               (c >= '0' && c <= '9') || (c == '-' && c == '+')) {
       ++keyword_size;
     } else if (c == '\n') {
       if (keyword_size > 0) {
@@ -146,6 +145,10 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       ++token_array.size;
       keyword_size = 0;
     } else if (c == ';') {
+      if(keyword_size > 0){
+        lexePart(i, keyword_size, content, &token_array, line, column);
+      }
+
       is_comment = true;
     } else if (c == '\'' || c == '"') {
       is_string = true;
@@ -201,7 +204,13 @@ void lexePart(const size_t position, const size_t keyword_size,
 }
 
 bool isNumber(const char *number) {
-  for (size_t i = 0; i < strlen(number); ++i) {
+  size_t i = 0;
+  
+  if(number[0] == '+' ||number[0] == '-' ){
+    ++i;
+  }
+
+  for (; i < strlen(number); ++i) {
     if (number[i] >= '0' && number[i] <= '9') {
       continue;
     } else {
