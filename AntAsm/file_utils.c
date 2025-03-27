@@ -1,6 +1,7 @@
 #include "file_utils.h"
 #include <stdlib.h>
 
+// Open file in read mode
 char *readFile(const char *path) {
   FILE *fp;
 
@@ -9,6 +10,7 @@ char *readFile(const char *path) {
     exit(-1);
   }
 
+  // Go to the end of file and calc the size of the file content
   fseek(fp, 0, SEEK_END);
   long filesize = ftell(fp);
   rewind(fp);

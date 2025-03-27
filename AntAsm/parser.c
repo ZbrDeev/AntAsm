@@ -163,6 +163,7 @@ struct Program parse(struct TokenArray *token_array,
     struct Token token = token_array->tokens[i];
 
     if (token.type == Opcode) {
+      // If opcode is equal syscall do not check the 3 last token
       if (strcmp(token.value, "syscall") != 0) {
         for (size_t j = 1; j <= 3; ++j) {
           if (token_array->tokens[i + j].line <= 0) {
@@ -182,6 +183,7 @@ struct Program parse(struct TokenArray *token_array,
       ast.member_list[ast.size - 1].member_list_type = OperationMemberType;
       ast.member_list[ast.size - 1].member_list.operation_member =
           parseOperationMember(token_array, &i, ast.member_list);
+
     } else if (token.type == Identifier) {
       for (size_t j = 1; j <= 4; ++j) {
         if (token_array->tokens[i + j].line <= 0) {
@@ -192,6 +194,7 @@ struct Program parse(struct TokenArray *token_array,
       ast.member_list[ast.size - 1].member_list_type = LabelMemberType;
       ast.member_list[ast.size - 1].member_list.label_member =
           parseLabel(token_array, &i, ast.member_list);
+
     } else {
       throwAndFreeToken(EXPECT_KEYWORD, &freeToken, token_array, i,
                         ast.member_list);
@@ -246,6 +249,7 @@ struct OperationMember parseOperationMember(struct TokenArray *token_array,
 
   operation_member.operation_type =
       stringToOperationType(token_array->tokens[*i].value);
+  
   if (operation_member.operation_type == Syscall) {
     return operation_member;
   }
@@ -281,6 +285,7 @@ struct OperationMember parseOperationMember(struct TokenArray *token_array,
   return operation_member;
 }
 
+// For operation like "jmp test"
 void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
                             struct OperationMember *operation_member) {
   struct Token token = token_array->tokens[i];
@@ -292,6 +297,7 @@ void parseOnlyDestOperation(struct TokenArray *token_array, size_t i,
   operation_member->location.end.column = token.end;
 }
 
+// For operation like "mov eax, 4"
 void parseSrcDestOperation(struct TokenArray *token_array, size_t *i,
                            struct OperationMember *operation_member,
                            struct MemberList *member_list) {

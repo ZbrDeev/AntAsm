@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Calc the sum of all string in hex
 int stringToSum(const char *string) {
   size_t size = strlen(string);
   int result = 0;

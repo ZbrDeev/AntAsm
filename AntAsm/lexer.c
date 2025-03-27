@@ -14,6 +14,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
   size_t column = 0;
   size_t line = 1;
 
+  // For tokenize string type
   bool is_string = false;
   char guillemet = '\0';
 
@@ -30,6 +31,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       continue;
     }
 
+    // Tokenize string
     if (is_string && c != guillemet) {
       ++keyword_size;
       continue;
@@ -157,6 +159,7 @@ struct TokenArray lexer(const struct ContentInfo *content) {
   return token_array;
 }
 
+// Tokenize part with a value
 void lexePart(const size_t position, const size_t keyword_size,
               const struct ContentInfo *content, struct TokenArray *array,
               size_t line, size_t column) {
@@ -198,9 +201,7 @@ void lexePart(const size_t position, const size_t keyword_size,
 }
 
 bool isNumber(const char *number) {
-  size_t size = strlen(number);
-
-  for (size_t i = 0; i < size; ++i) {
+  for (size_t i = 0; i < strlen(number); ++i) {
     if (number[i] >= '0' && number[i] <= '9') {
       continue;
     } else {
@@ -211,6 +212,7 @@ bool isNumber(const char *number) {
   return true;
 }
 
+// Free tokens, line content and the value in TokenArray types
 void freeToken(struct TokenArray *token_array) {
   size_t line_size = token_array->tokens[token_array->size - 1].line;
 
