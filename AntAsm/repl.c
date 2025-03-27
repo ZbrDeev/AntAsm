@@ -41,7 +41,6 @@ int parseReplLine(size_t code_size, char *code_line,
     status_code = register_emu->reg_DI;
   }
 
-  freeRegisterRepl(register_emu);
   free(program.member_list);
   freeToken(&token_array);
 
@@ -105,6 +104,8 @@ int runRepl() {
       break;
     }
   }
+
+  freeRegisterRepl(&register_emu);
 
   return status_code;
 }

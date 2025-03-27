@@ -2,6 +2,7 @@
 #define REPL_H
 
 #include "run.h"
+#include "token.h"
 
 #define MAX_INPUT_BUFFER 512
 

@@ -215,7 +215,8 @@ void freeToken(struct TokenArray *token_array) {
   size_t line_size = token_array->tokens[token_array->size - 1].line;
 
   for (size_t i = 0; i < token_array->size; ++i) {
-    if (token_array->tokens[i].value != NULL) {
+    if (token_array->tokens[i].value != NULL &&
+        token_array->tokens[i].type != LiteralString) {
       free(token_array->tokens[i].value);
     }
   }
