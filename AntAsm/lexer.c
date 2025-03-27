@@ -20,7 +20,9 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
   bool is_comment = false;
 
-  for (size_t i = 0; i < content->content_size; ++i) {
+  size_t i = 0;
+
+  for (; i < content->content_size; ++i) {
     const char c = content->content[i];
     ++column;
 
@@ -156,6 +158,10 @@ struct TokenArray lexer(const struct ContentInfo *content) {
     } else {
       ++keyword_size;
     }
+  }
+
+  if(keyword_size > 0){
+    lexePart(i, keyword_size, content, &token_array, line, column);
   }
 
   --token_array.size;
