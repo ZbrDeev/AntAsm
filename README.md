@@ -14,18 +14,21 @@ AntAsm is a lightweight and efficient x86_64 assembler interpreter written in C.
 To get started with AntAsm, follow the steps below:
 
 ### Requirements
-- A C compiler (GCC recommended)
+
+- GCC
 - CMake
 
 ### Steps
 
 1. **Clone the Repository**
-  ```bash
-  git clone https://github.com/your-username/AntAsm.git
-  cd AntAsm
+
+```bash
+git clone https://github.com/your-username/AntAsm.git
+cd AntAsm
 ```
-   
+
 2. **Compile the Code**
+
 ```bash
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -35,6 +38,7 @@ cmake --build .
 ## Usage
 
 Once you have compiled, you can run AntAsm with an assembly file.
+
 ```bash
 ./AntAsm test.asm
 ```
@@ -55,11 +59,8 @@ If you would like to contribute to AntAsm, feel free to fork the repository, mak
 ### Steps to Contribute:
 
 1.  Fork the repository.
-    
 2.  Make your changes and commit them (`git add . && git commit -m 'Add new feature' && git push origin main`).
-    
 3.  Create a new pull request.
-    
 
 ## License
 
