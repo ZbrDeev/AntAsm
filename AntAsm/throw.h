@@ -19,20 +19,12 @@
        "https://github.com/ZbrDeev/AntAsm/issues"
 
 enum ErrorType {
-  Arrow,
-  Plus,
+  Error_Arrow,
+  Error_Plus,
 };
 
 void printError(int status, const char *reason, const char *filename,
                 const char *line_content, size_t line, size_t start,
                 size_t end);
-
-void throwError(int status, const char *reason, const char *filename,
-                const char *line_content, int line, int start, int end);
-
-void throwAndFreeToken(int status, const char *reason,
-                       void(free_token)(struct TokenArray *),
-                       struct TokenArray *token_array, size_t i,
-                       struct MemberList *member_list);
 
 #endif // THROW_H

@@ -5,6 +5,7 @@
 #include <string.h>
 
 struct TokenArray lexer(const struct ContentInfo *content) {
+  // Initialize token array 
   struct TokenArray token_array;
   size_t keyword_size = 0;
   token_array.size = 1;
@@ -24,9 +25,9 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
   for (; i < content->content_size; ++i) {
     const char c = content->content[i];
-
     ++column;
 
+    // If c reach the enline we can now set is_comment to false
     if (is_comment && c == '\n') {
       is_comment = false;
     } else if (is_comment) {
@@ -48,22 +49,14 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       }
 
       struct Token token;
-      token.type = LiteralString;
+      token.type = Token_LiteralString;
       token.value = string_value;
       token.line = line;
       token.start = column - keyword_size - 1;
       token.end = column;
       token.filename = content->filename;
 
-      struct Token *temp = (struct Token *)realloc(
-          token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
-
-      assert(temp != NULL);
-
-      token_array.tokens = temp;
-      token_array.tokens[token_array.size - 1] = token;
-      token_array.tokens[token_array.size].line = 0;
-      ++token_array.size;
+      INSERT_TOKEN()
 
       is_string = false;
       guillemet = '\0';
@@ -73,18 +66,15 @@ struct TokenArray lexer(const struct ContentInfo *content) {
     }
 
     if (c == ' ' || c == '\t') {
-      if (keyword_size > 0) {
-        lexePart(i, keyword_size, content, &token_array, line, column);
-      }
+      CHECK_KEYWORD_SIZE()
+
       keyword_size = 0;
       continue;
     } else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
                (c >= '0' && c <= '9') || (c == '-' && c == '+')) {
       ++keyword_size;
     } else if (c == '\n') {
-      if (keyword_size > 0) {
-        lexePart(i, keyword_size, content, &token_array, line, column);
-      }
+      CHECK_KEYWORD_SIZE()
 
       char **temp = (char **)realloc(token_array.line_content,
                                      (line + 1) * sizeof(char *));
@@ -105,53 +95,30 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       ++line;
       keyword_size = 0;
     } else if (c == ',') {
-      if (keyword_size > 0) {
-        lexePart(i, keyword_size, content, &token_array, line, column);
-      }
+      CHECK_KEYWORD_SIZE()
 
-      struct Token token = {.type = Comma,
+      struct Token token = {.type = Token_Comma,
                             .value = NULL,
                             .start = column - 1,
                             .end = column,
                             .line = line,
                             .filename = content->filename};
 
-      struct Token *temp = (struct Token *)realloc(
-          token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
-
-      assert(temp != NULL);
-
-      token_array.tokens = temp;
-      token_array.tokens[token_array.size - 1] = token;
-      token_array.tokens[token_array.size].line = 0;
-      ++token_array.size;
+      INSERT_TOKEN()
       keyword_size = 0;
     } else if (c == ':') {
-      if (keyword_size > 0) {
-        lexePart(i, keyword_size, content, &token_array, line, column);
-      }
+      CHECK_KEYWORD_SIZE()
 
-      struct Token token = {.type = SemiColon,
+      struct Token token = {.type = Token_SemiColon,
                             .value = NULL,
                             .start = column - 1,
                             .end = column,
                             .line = line,
                             .filename = content->filename};
 
-      struct Token *temp = (struct Token *)realloc(
-          token_array.tokens, (token_array.size + 1) * sizeof(struct Token));
-
-      assert(temp != NULL);
-
-      token_array.tokens = temp;
-      token_array.tokens[token_array.size - 1] = token;
-      token_array.tokens[token_array.size].line = 0;
-      ++token_array.size;
-      keyword_size = 0;
+      INSERT_TOKEN()
     } else if (c == ';') {
-      if(keyword_size > 0){
-        lexePart(i, keyword_size, content, &token_array, line, column);
-      }
+      CHECK_KEYWORD_SIZE()
 
       is_comment = true;
     } else if (c == '\'' || c == '"') {
@@ -162,58 +129,58 @@ struct TokenArray lexer(const struct ContentInfo *content) {
     }
   }
 
-  if(keyword_size > 0){
-    lexePart(i, keyword_size, content, &token_array, line, column);
-  }
-
   --token_array.size;
   return token_array;
 }
 
 // Tokenize part with a value
 void lexePart(const size_t position, const size_t keyword_size,
-              const struct ContentInfo *content, struct TokenArray *array,
+              const struct ContentInfo *content, struct TokenArray *token_array,
               size_t line, size_t column) {
+  // Initialize the token
   struct Token token;
-  token.value = (char *)malloc((keyword_size + 1) * sizeof(char));
+  token.value = (char *)malloc((keyword_size + 1));
   token.start = column - keyword_size;
   token.end = column;
   token.line = line;
   token.filename = content->filename;
 
+  // Get the current string value tokenized
+  size_t text_position = position - keyword_size;
   for (size_t i = 0; i < keyword_size; ++i) {
-    size_t text_position = position - keyword_size + i;
-    token.value[i] = content->content[text_position];
+    token.value[i] = content->content[text_position+i];
   }
 
   token.value[keyword_size] = '\0';
 
   if (OPCODE_CMP(token.value)) {
-    token.type = Opcode;
+    token.type = Token_Opcode;
   } else if (REGISTER_CMP(token.value)) {
-    token.type = Register;
+    token.type = Token_Register;
   } else if (token.value[0] == '0' && token.value[1] == 'x') {
-    token.type = LiteralHex;
+    token.type = Token_LiteralHex;
   } else if (isNumber(token.value)) {
-    token.type = LiteralNumber;
+    token.type = Token_LiteralNumber;
   } else {
-    token.type = Identifier;
+    token.type = Token_Identifier;
   }
 
+
   struct Token *temp = (struct Token *)realloc(
-      array->tokens, (array->size + 1) * sizeof(struct Token));
+      token_array->tokens, (token_array->size + 1) * sizeof(struct Token));
 
   assert(temp != NULL);
 
-  array->tokens = temp;
-  array->tokens[array->size - 1] = token;
-  array->tokens[array->size].line = 0;
-  ++array->size;
+  token_array->tokens = temp;
+  token_array->tokens[token_array->size - 1] = token;
+  token_array->tokens[token_array->size].line = 0;
+  ++token_array->size;
 }
 
 bool isNumber(const char *number) {
   size_t i = 0;
   
+  // Ignore the unary operator
   if(number[0] == '+' ||number[0] == '-' ){
     ++i;
   }
@@ -234,8 +201,9 @@ void freeToken(struct TokenArray *token_array) {
   size_t line_size = token_array->tokens[token_array->size - 1].line;
 
   for (size_t i = 0; i < token_array->size; ++i) {
+    // LiteralString will be free in BST
     if (token_array->tokens[i].value != NULL &&
-        token_array->tokens[i].type != LiteralString) {
+        token_array->tokens[i].type != Token_LiteralString) {
       free(token_array->tokens[i].value);
     }
   }

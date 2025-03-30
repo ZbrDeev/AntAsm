@@ -9,14 +9,18 @@
 int stringToSum(const char *string);
 
 enum NodeValueType {
-  Int64,
-  Int32,
-  Int16,
-  Int8,
-  String,
-  Int8_Low,
-  Int8_High,
-  Null,
+  // Numerical value
+  NodeValue_Int64,
+  NodeValue_Int32,
+  NodeValue_Int16,
+  NodeValue_Int8,
+
+  // For register like AL for Low and AH for High
+  NodeValue_Int8_Low,
+  NodeValue_Int8_High,
+
+  NodeValue_String,
+  NodeValue_Null,
 };
 
 struct NodeValue {

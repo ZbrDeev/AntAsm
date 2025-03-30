@@ -4,14 +4,14 @@
 #include <stddef.h>
 
 enum TokenType {
-  Comma,
-  SemiColon,
-  Identifier,
-  Opcode,
-  Register,
-  LiteralString,
-  LiteralNumber,
-  LiteralHex,
+  Token_Comma,
+  Token_SemiColon,
+  Token_Identifier,
+  Token_Opcode,
+  Token_Register,
+  Token_LiteralString,
+  Token_LiteralNumber,
+  Token_LiteralHex,
 };
 
 struct Token {

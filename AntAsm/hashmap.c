@@ -43,7 +43,7 @@ struct NodeValue navigateIntoNode(struct Node *node, const char *key) {
     return node_it->value;
   }
 
-  struct NodeValue node_null_value = {.node_value_type = Null,
+  struct NodeValue node_null_value = {.node_value_type = NodeValue_Null,
                                       .node_value = NULL};
   return node_null_value;
 }
@@ -62,7 +62,7 @@ struct NodeValue getValue(struct HashMap *hashmap, const char *key) {
     node = node->next;
   }
 
-  struct NodeValue node_null_value = {.node_value_type = Null,
+  struct NodeValue node_null_value = {.node_value_type = NodeValue_Null,
                                       .node_value = NULL};
   return node_null_value;
 }

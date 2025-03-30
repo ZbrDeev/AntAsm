@@ -55,23 +55,3 @@ void printError(int status, const char *reason, const char *filename,
   free(error_arrow);
   free(error_info);
 }
-
-void throwError(int status, const char *reason, const char *filename,
-                const char *line_content, int line, int start, int end) {
-  printError(status, reason, filename, line_content, line, start, end);
-  exit(status);
-}
-
-void throwAndFreeToken(int status, const char *reason,
-                       void(free_token)(struct TokenArray *),
-                       struct TokenArray *token_array, size_t i,
-                       struct MemberList *member_list) {
-  struct Token token = token_array->tokens[i];
-
-  printError(status, reason, token.filename,
-             token_array->line_content[token.line - 1], token.line, token.start,
-             token.end);
-  free(member_list);
-  free_token(token_array);
-  exit(status);
-}

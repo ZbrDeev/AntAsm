@@ -25,7 +25,7 @@ struct Bst *createBstNode(size_t sum_of_key, size_t value, char *string_value) {
 
 void addKeyValueBst(struct Bst **bst, size_t sum_of_key, size_t value,
                     char *string_value) {
-  if (*bst == NULL) {
+  if (*bst == NULL || (*bst)->sum_of_utf_key == 0) {
     *bst = createBstNode(sum_of_key, value, string_value);
   } else if ((*bst)->sum_of_utf_key < sum_of_key) {
     addKeyValueBst(&(*bst)->left, sum_of_key, value, string_value);

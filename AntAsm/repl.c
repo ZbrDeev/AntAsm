@@ -26,14 +26,15 @@ int parseReplLine(size_t code_size, char *code_line,
 
   struct TokenArray token_array = lexer(&content);
 
-  struct Program program = parse(&token_array, register_emu->symbol);
+  struct Program *program = parse(&token_array, register_emu->symbol);
 
-  if (program.member_list[0].member_list_type == OperationMemberType) {
-    manageOperationType(program.member_list[0].member_list.operation_member,
+  if (program->member_list[0].member_list_type == MemberList_OperationMember) {
+    manageOperationType(program->member_list[0].member_list.operation_member,
                         register_emu, 0);
-  } else if (program.member_list[0].member_list_type == LabelMemberType) {
+  } else if (program->member_list[0].member_list_type ==
+             MemberList_LabelMember) {
     manageOperationType(
-        program.member_list[0].member_list.label_member.operation_member,
+        program->member_list[0].member_list.label_member.operation_member,
         register_emu, 0);
   }
 
@@ -41,7 +42,7 @@ int parseReplLine(size_t code_size, char *code_line,
     status_code = register_emu->reg_DI;
   }
 
-  free(program.member_list);
+  free(program->member_list);
   freeToken(&token_array);
 
   return status_code;
