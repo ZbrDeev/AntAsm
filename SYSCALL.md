@@ -1,0 +1,17 @@
+# Supported syscall
+
+## Linux
+- SYS_WRITE 1
+- SYS_OPEN 2
+- SYS_CLOSE 3
+- SYS_EXIT 60
+- SYS_KILL 62
+- SYS_CHDIR 80
+- SYS_FCHDIR 81
+- SYS_RENAME 82
+- SYS_MKDIR 83
+- SYS_RMDIR 84
+- SYS_CREAT 85
+
+## Windows
+### Soon...
