@@ -5,7 +5,7 @@
 #include <string.h>
 
 struct TokenArray lexer(const struct ContentInfo *content) {
-  // Initialize token array 
+  // Initialize token array
   struct TokenArray token_array;
   size_t keyword_size = 0;
   token_array.size = 1;
@@ -34,42 +34,10 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       continue;
     }
 
-
-    // Tokenize string
-    if (is_string && c != guillemet) {
-      ++keyword_size;
-      continue;
-    } else if (is_string && c == guillemet) {
-      char *string_value = (char *)malloc(keyword_size + 1);
-      string_value[keyword_size] = '\0';
-
-      for (size_t j = 0; j < keyword_size; ++j) {
-        size_t text_position = i - keyword_size + j;
-        string_value[j] = content->content[text_position];
-      }
-
-      struct Token token;
-      token.type = Token_LiteralString;
-      token.value = string_value;
-      token.line = line;
-      token.start = column - keyword_size - 1;
-      token.end = column;
-      token.filename = content->filename;
-
-      INSERT_TOKEN()
-
-      is_string = false;
-      guillemet = '\0';
-      keyword_size = 0;
-
-      continue;
-    }
-
     if (c == ' ' || c == '\t') {
       CHECK_KEYWORD_SIZE()
 
       keyword_size = 0;
-      continue;
     } else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
                (c >= '0' && c <= '9') || (c == '-' && c == '+')) {
       ++keyword_size;
@@ -122,8 +90,36 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
       is_comment = true;
     } else if (c == '\'' || c == '"') {
-      is_string = true;
-      guillemet = c;
+      // Tokenize string
+      if (is_string && c == guillemet) {
+        char *string_value = (char *)malloc(keyword_size + 1);
+        string_value[keyword_size] = '\0';
+
+        for (size_t j = 0; j < keyword_size; ++j) {
+          size_t text_position = i - keyword_size + j;
+          string_value[j] = content->content[text_position];
+        }
+
+        struct Token token;
+        token.type = Token_LiteralString;
+        token.value = string_value;
+        token.line = line;
+        token.start = column - keyword_size - 1;
+        token.end = column;
+        token.filename = content->filename;
+
+        INSERT_TOKEN()
+
+        is_string = false;
+        guillemet = '\0';
+        keyword_size = 0;
+      } else if (!is_string) {
+        is_string = true;
+        guillemet = c;
+      } else {
+        ++keyword_size;
+      }
+
     } else {
       ++keyword_size;
     }
@@ -148,7 +144,7 @@ void lexePart(const size_t position, const size_t keyword_size,
   // Get the current string value tokenized
   size_t text_position = position - keyword_size;
   for (size_t i = 0; i < keyword_size; ++i) {
-    token.value[i] = content->content[text_position+i];
+    token.value[i] = content->content[text_position + i];
   }
 
   token.value[keyword_size] = '\0';
@@ -165,7 +161,6 @@ void lexePart(const size_t position, const size_t keyword_size,
     token.type = Token_Identifier;
   }
 
-
   struct Token *temp = (struct Token *)realloc(
       token_array->tokens, (token_array->size + 1) * sizeof(struct Token));
 
@@ -179,9 +174,9 @@ void lexePart(const size_t position, const size_t keyword_size,
 
 bool isNumber(const char *number) {
   size_t i = 0;
-  
+
   // Ignore the unary operator
-  if(number[0] == '+' ||number[0] == '-' ){
+  if (number[0] == '+' || number[0] == '-') {
     ++i;
   }
 
@@ -201,14 +196,12 @@ void freeToken(struct TokenArray *token_array) {
   size_t line_size = token_array->tokens[token_array->size - 1].line;
 
   for (size_t i = 0; i < token_array->size; ++i) {
-    // LiteralString will be free in BST
-    if (token_array->tokens[i].value != NULL &&
-        token_array->tokens[i].type != Token_LiteralString) {
+    if (token_array->tokens[i].value != NULL) {
       free(token_array->tokens[i].value);
     }
   }
 
-  for (size_t i = 0; i < line_size; ++i) {
+  for (size_t i = 0; i < line_size + 1; ++i) {
     free(token_array->line_content[i]);
   }
 

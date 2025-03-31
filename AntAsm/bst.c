@@ -66,8 +66,6 @@ void freeBst(struct Bst *bst) {
     freeBst(bst);
   }
 
-  if (bst->string_value != NULL) {
-    free(bst->string_value);
-  }
+  // BST string_value will be free in freeToken
   free(bst);
 }
