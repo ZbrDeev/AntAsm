@@ -528,6 +528,11 @@ void freeRegister(struct RegisterEmu *register_emu) {
 
 int doAllProcess(const char *file) {
   char *file_content = readFile(file);
+
+  if (file_content == NULL) {
+    return -1;
+  }
+
   size_t file_size = strlen(file_content);
 
   const struct ContentInfo content_info = {

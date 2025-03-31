@@ -27,6 +27,13 @@ void addKeyValueBst(struct Bst **bst, size_t sum_of_key, size_t value,
                     char *string_value) {
   if (*bst == NULL || (*bst)->sum_of_utf_key == 0) {
     *bst = createBstNode(sum_of_key, value, string_value);
+  } else if ((*bst)->sum_of_utf_key == sum_of_key) {
+    if ((*bst)->string_value != NULL) {
+      free((*bst)->string_value);
+    }
+
+    (*bst)->value = value;
+    (*bst)->string_value = string_value;
   } else if ((*bst)->sum_of_utf_key < sum_of_key) {
     addKeyValueBst(&(*bst)->left, sum_of_key, value, string_value);
   } else {
@@ -59,6 +66,8 @@ void freeBst(struct Bst *bst) {
     freeBst(bst);
   }
 
-  free(bst->string_value);
+  if (bst->string_value != NULL) {
+    free(bst->string_value);
+  }
   free(bst);
 }
