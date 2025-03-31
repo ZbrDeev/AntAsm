@@ -179,7 +179,7 @@ struct Program *parse(struct TokenArray *token_array,
     ast->member_list->symbol = NULL;
   }
 
-  for (size_t i = 0; i < token_array->size; ++i) {
+  for (size_t i = 0; i < token_array->size - 1; ++i) {
     struct Token token = token_array->tokens[i];
 
     if (token.type == Token_Opcode) {

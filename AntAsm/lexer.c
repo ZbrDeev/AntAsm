@@ -161,7 +161,6 @@ struct TokenArray *lexer(const struct ContentInfo *content) {
     }
   }
 
-  --token_array->size;
   return token_array;
 }
 
@@ -230,9 +229,9 @@ bool isNumber(const char *number) {
 
 // Free tokens, line content and the value in TokenArray types
 void freeToken(struct TokenArray *token_array) {
-  size_t line_size = token_array->tokens[token_array->size - 1].line;
+  size_t line_size = token_array->tokens[token_array->size - 2].line;
 
-  for (size_t i = 0; i < token_array->size; ++i) {
+  for (size_t i = 0; i < token_array->size - 1; ++i) {
     if (token_array->tokens[i].value != NULL) {
       free(token_array->tokens[i].value);
     }

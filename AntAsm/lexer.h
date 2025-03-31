@@ -69,6 +69,7 @@
   token_array->tokens = temp;                                                  \
   token_array->tokens[token_array->size - 1] = token;                          \
   token_array->tokens[token_array->size].line = 0;                             \
+  token_array->tokens[token_array->size].value = NULL;                         \
   ++token_array->size;                                                         \
   keyword_size = 0;
 
