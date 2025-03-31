@@ -538,20 +538,24 @@ int doAllProcess(const char *file) {
   const struct ContentInfo content_info = {
       .content = file_content, .filename = file, .content_size = file_size};
 
-  struct TokenArray token = lexer(&content_info);
+  struct TokenArray *token = lexer(&content_info);
   free(file_content);
 
-  struct Program *program = parse(&token, NULL);
+  if (token == NULL) {
+    return -1;
+  }
+
+  struct Program *program = parse(token, NULL);
 
   if (program == NULL) {
-    freeToken(&token);
+    freeToken(token);
     return -1;
   }
 
   int status_code = runScript(program);
 
   freeProgram(program);
-  freeToken(&token);
+  freeToken(token);
 
   return status_code;
 }

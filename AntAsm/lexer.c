@@ -1,16 +1,19 @@
 #include "lexer.h"
+#include "throw.h"
 #include "token.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-struct TokenArray lexer(const struct ContentInfo *content) {
+struct TokenArray *lexer(const struct ContentInfo *content) {
   // Initialize token array
-  struct TokenArray token_array;
+  struct TokenArray *token_array =
+      (struct TokenArray *)malloc(sizeof(struct TokenArray));
   size_t keyword_size = 0;
-  token_array.size = 1;
-  token_array.tokens = (struct Token *)malloc(sizeof(struct Token));
-  token_array.line_content = (char **)malloc(sizeof(char *));
+  token_array->size = 1;
+  token_array->tokens = (struct Token *)malloc(sizeof(struct Token));
+  token_array->line_content = (char **)malloc(sizeof(char *));
+  token_array->line_content[0] = NULL;
 
   size_t column = 0;
   size_t line = 1;
@@ -34,6 +37,61 @@ struct TokenArray lexer(const struct ContentInfo *content) {
       continue;
     }
 
+    // Tokenize string
+    if (is_string && c != guillemet) {
+      if (c == '\n') {
+        char **temp = (char **)realloc(token_array->line_content,
+                                       (line + 1) * sizeof(char *));
+
+        assert(temp != NULL);
+
+        token_array->line_content = temp;
+
+        token_array->line_content[line - 1] = (char *)malloc(column--);
+        token_array->line_content[line - 1][column] = '\0';
+        token_array->line_content[line] = NULL;
+
+        for (size_t j = 0; j < column; ++j) {
+          size_t text_position = i - column + j;
+          token_array->line_content[line - 1][j] =
+              content->content[text_position];
+        }
+
+        printError(INVALID_STRING, content->filename,
+                   token_array->line_content[line - 1], line, i - keyword_size,
+                   column);
+        freeToken(token_array);
+        return NULL;
+      } else {
+        ++keyword_size;
+        continue;
+      }
+    } else if (is_string && c == guillemet) {
+      char *string_value = (char *)malloc(keyword_size + 1);
+      string_value[keyword_size] = '\0';
+
+      for (size_t j = 0; j < keyword_size; ++j) {
+        size_t text_position = i - keyword_size + j;
+        string_value[j] = content->content[text_position];
+      }
+
+      struct Token token;
+      token.type = Token_LiteralString;
+      token.value = string_value;
+      token.line = line;
+      token.start = column - keyword_size - 1;
+      token.end = column;
+      token.filename = content->filename;
+
+      INSERT_TOKEN()
+
+      is_string = false;
+      guillemet = '\0';
+      keyword_size = 0;
+
+      continue;
+    }
+
     if (c == ' ' || c == '\t') {
       CHECK_KEYWORD_SIZE()
 
@@ -44,19 +102,21 @@ struct TokenArray lexer(const struct ContentInfo *content) {
     } else if (c == '\n') {
       CHECK_KEYWORD_SIZE()
 
-      char **temp = (char **)realloc(token_array.line_content,
+      char **temp = (char **)realloc(token_array->line_content,
                                      (line + 1) * sizeof(char *));
 
       assert(temp != NULL);
 
-      token_array.line_content = temp;
+      token_array->line_content = temp;
 
-      token_array.line_content[line - 1] = (char *)malloc(column--);
-      token_array.line_content[line - 1][column] = '\0';
+      token_array->line_content[line - 1] = (char *)malloc(column--);
+      token_array->line_content[line - 1][column] = '\0';
+      token_array->line_content[line] = NULL;
 
       for (size_t j = 0; j < column; ++j) {
         size_t text_position = i - column + j;
-        token_array.line_content[line - 1][j] = content->content[text_position];
+        token_array->line_content[line - 1][j] =
+            content->content[text_position];
       }
 
       column = 0;
@@ -90,42 +150,18 @@ struct TokenArray lexer(const struct ContentInfo *content) {
 
       is_comment = true;
     } else if (c == '\'' || c == '"') {
-      // Tokenize string
-      if (is_string && c == guillemet) {
-        char *string_value = (char *)malloc(keyword_size + 1);
-        string_value[keyword_size] = '\0';
+      CHECK_KEYWORD_SIZE()
 
-        for (size_t j = 0; j < keyword_size; ++j) {
-          size_t text_position = i - keyword_size + j;
-          string_value[j] = content->content[text_position];
-        }
-
-        struct Token token;
-        token.type = Token_LiteralString;
-        token.value = string_value;
-        token.line = line;
-        token.start = column - keyword_size - 1;
-        token.end = column;
-        token.filename = content->filename;
-
-        INSERT_TOKEN()
-
-        is_string = false;
-        guillemet = '\0';
-        keyword_size = 0;
-      } else if (!is_string) {
-        is_string = true;
-        guillemet = c;
-      } else {
-        ++keyword_size;
-      }
+      is_string = true;
+      guillemet = c;
+      keyword_size = 0;
 
     } else {
       ++keyword_size;
     }
   }
 
-  --token_array.size;
+  --token_array->size;
   return token_array;
 }
 
@@ -168,6 +204,7 @@ void lexePart(const size_t position, const size_t keyword_size,
 
   token_array->tokens = temp;
   token_array->tokens[token_array->size - 1] = token;
+  token_array->tokens[token_array->size].value = NULL;
   token_array->tokens[token_array->size].line = 0;
   ++token_array->size;
 }
@@ -202,9 +239,12 @@ void freeToken(struct TokenArray *token_array) {
   }
 
   for (size_t i = 0; i < line_size + 1; ++i) {
-    free(token_array->line_content[i]);
+    if (token_array->line_content[i] != NULL) {
+      free(token_array->line_content[i]);
+    }
   }
 
   free(token_array->line_content);
   free(token_array->tokens);
+  free(token_array);
 }

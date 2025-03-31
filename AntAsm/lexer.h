@@ -61,22 +61,23 @@
    strcmp(register, "r15") == 0 || strcmp(register, "r15d") == 0 ||            \
    strcmp(register, "r15w") == 0 || strcmp(register, "r15b") == 0)
 
-
 // Insert token in token_array
-#define INSERT_TOKEN()                                                   \
-struct Token *temp = (struct Token *)realloc(                                 \
-token_array.tokens, (token_array.size + 1) * sizeof(struct Token));           \
-  assert(temp != NULL);                                                       \
-  token_array.tokens = temp;                                                  \
-  token_array.tokens[token_array.size - 1] = token;                           \
-  token_array.tokens[token_array.size].line = 0;                              \
-  ++token_array.size;keyword_size = 0;
+#define INSERT_TOKEN()                                                         \
+  struct Token *temp = (struct Token *)realloc(                                \
+      token_array->tokens, (token_array->size + 1) * sizeof(struct Token));    \
+  assert(temp != NULL);                                                        \
+  token_array->tokens = temp;                                                  \
+  token_array->tokens[token_array->size - 1] = token;                          \
+  token_array->tokens[token_array->size].line = 0;                             \
+  ++token_array->size;                                                         \
+  keyword_size = 0;
 
-
-// Check if keyword_size is greater than 0 if yes parse the token before the current
-#define CHECK_KEYWORD_SIZE() if(keyword_size > 0){                            \
-  lexePart(i, keyword_size, content, &token_array, line, column);             \
-}
+// Check if keyword_size is greater than 0 if yes parse the token before the
+// current
+#define CHECK_KEYWORD_SIZE()                                                   \
+  if (keyword_size > 0) {                                                      \
+    lexePart(i, keyword_size, content, token_array, line, column);             \
+  }
 
 struct ContentInfo {
   const char *content;
@@ -84,7 +85,7 @@ struct ContentInfo {
   const char *filename;
 };
 
-struct TokenArray lexer(const struct ContentInfo *content);
+struct TokenArray *lexer(const struct ContentInfo *content);
 
 void lexePart(const size_t position, const size_t keyword_size,
               const struct ContentInfo *content, struct TokenArray *token_array,

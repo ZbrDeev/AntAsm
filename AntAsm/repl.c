@@ -24,9 +24,14 @@ int parseReplLine(size_t code_size, char *code_line,
   const struct ContentInfo content = {
       .content_size = code_size, .content = code_line, .filename = NULL};
 
-  struct TokenArray token_array = lexer(&content);
+  struct TokenArray *token_array = lexer(&content);
 
-  struct Program *program = parse(&token_array, register_emu->symbol);
+  if (token_array == NULL) {
+    register_emu->exit = true;
+    return -1;
+  }
+
+  struct Program *program = parse(token_array, register_emu->symbol);
 
   if (program->member_list[0].member_list_type == MemberList_OperationMember) {
     manageOperationType(program->member_list[0].member_list.operation_member,
@@ -43,7 +48,7 @@ int parseReplLine(size_t code_size, char *code_line,
   }
 
   free(program->member_list);
-  freeToken(&token_array);
+  freeToken(token_array);
 
   return status_code;
 }
