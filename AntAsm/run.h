@@ -176,6 +176,46 @@
   flags.cf = 0;                                                                \
   flags.pf = 0;
 
+#if defined(__clang__)
+#define CHECK_IF_ADD_OVERFLOW(a, b, flags, type)                               \
+  int64_t temp = 0;                                                            \
+  if ((type == NodeValue_Int64 && __builtin_add_overflow(a, b, &temp)) ||      \
+      (type == NodeValue_Int32 &&                                              \
+       __builtin_add_overflow(a, b, (int32_t *)&temp)) ||                      \
+      (type == NodeValue_Int16 &&                                              \
+       __builtin_add_overflow(a, b, (int16_t *)&temp)) ||                      \
+      ((type == NodeValue_Int8 || type == NodeValue_Int8_Low ||                \
+        type == NodeValue_Int8_High) &&                                        \
+       __builtin_add_overflow(a, b, (int8_t *)&temp))) {                       \
+    flags.of = 1;                                                              \
+  }
+
+#define CHECK_IF_SUB_OVERFLOW(a, b, flags, type)                               \
+  int64_t temp = 0;                                                            \
+  if ((type == NodeValue_Int64 && __builtin_sub_overflow(a, b, &temp)) ||      \
+      (type == NodeValue_Int32 &&                                              \
+       __builtin_sub_overflow(a, b, (int32_t *)&temp)) ||                      \
+      (type == NodeValue_Int16 &&                                              \
+       __builtin_sub_overflow(a, b, (int16_t *)&temp)) ||                      \
+      ((type == NodeValue_Int8 || type == NodeValue_Int8_Low ||                \
+        type == NodeValue_Int8_High) &&                                        \
+       __builtin_sub_overflow(a, b, (int8_t *)&temp))) {                       \
+    flags.of = 1;                                                              \
+  }
+
+#define CHECK_IF_MUL_OVERFLOW(a, b, flags, type)                               \
+  int64_t temp = 0;                                                            \
+  if ((type == NodeValue_Int64 && __builtin_mul_overflow(a, b, &temp)) ||      \
+      (type == NodeValue_Int32 &&                                              \
+       __builtin_mul_overflow(a, b, (int32_t *)&temp)) ||                      \
+      (type == NodeValue_Int16 &&                                              \
+       __builtin_mul_overflow(a, b, (int16_t *)&temp)) ||                      \
+      ((type == NodeValue_Int8 || type == NodeValue_Int8_Low ||                \
+        type == NodeValue_Int8_High) &&                                        \
+       __builtin_mul_overflow(a, b, (int8_t *)&temp))) {                       \
+    flags.of = 1;                                                              \
+  }
+#elif defined(__GNUC__)
 #define CHECK_IF_ADD_OVERFLOW(a, b, flags, type)                               \
   if ((type == NodeValue_Int64 &&                                              \
        __builtin_add_overflow_p(a, b, (int64_t)a)) ||                          \
@@ -214,6 +254,7 @@
        __builtin_mul_overflow_p(a, b, (int8_t)a))) {                           \
     flags.of = 1;                                                              \
   }
+#endif
 
 union StackNodeValue {
   int32_t value_32bit;

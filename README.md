@@ -15,7 +15,7 @@ To get started with AntAsm, follow the steps below:
 
 ### Requirements
 
-- GCC
+- C Compiler (GCC or Clang)
 - CMake
 
 ### Steps

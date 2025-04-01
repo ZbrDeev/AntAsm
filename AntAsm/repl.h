@@ -6,7 +6,7 @@
 
 #define MAX_INPUT_BUFFER 512
 
-int runRepl();
+int runRepl(void);
 
 int parseReplLine(size_t code_size, char *code_line,
                   struct RegisterEmu *register_emu);

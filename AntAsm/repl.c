@@ -57,12 +57,12 @@ static void changeExitState(int __attribute__((unused)) sig) {
   printf("Please press Ctrl-D to exit the REPL.\n");
 }
 
-static void printHelp() {
+static void printHelp(void) {
   printf("/exit \t Exit the REPL\n");
   printf("/help \t Get the help page\n");
 }
 
-int runRepl() {
+int runRepl(void) {
   struct RegisterEmu register_emu;
   INIT_REGISTER_EMU(register_emu)
   INIT_HASHMAP_REGISTER_EMU(register_emu)
