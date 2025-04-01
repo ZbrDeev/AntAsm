@@ -57,7 +57,7 @@ int manageOperationType(struct OperationMember operation_member,
   if (operation_member.operation_type == Operation_Syscall) {
     int error_code = 0;
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
     error_code = callSyscallLinux(register_emu);
 #endif
 

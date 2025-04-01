@@ -3,7 +3,6 @@
 
 #include "run.h"
 
-#if defined(__linux__)
 #define SYS_WRITE 1
 #define SYS_OPEN 2
 #define SYS_CLOSE 3
@@ -16,6 +15,7 @@
 #define SYS_RMDIR 84
 #define SYS_CREAT 85
 
+#if defined(__linux__) || defined(__APPLE__)
 int callSyscallLinux(struct RegisterEmu *register_emu);
 #endif
 

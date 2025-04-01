@@ -3,7 +3,7 @@
 #include "run.h"
 #include <stdio.h>
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/stat.h>
