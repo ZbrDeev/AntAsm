@@ -31,11 +31,13 @@ cd AntAsm
 
 ```bash
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build .
+cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ..
+ninja -jN
 ```
 
 ## Usage
+
+Supported registers, opcodes and syscalls are in [SUPPORTED.md](https://github.com/ZbrDeev/AntAsm/blob/main/SUPPORTED.md).
 
 Once you have compiled, you can run AntAsm with an assembly file.
 
