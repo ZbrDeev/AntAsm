@@ -23,7 +23,7 @@ To get started with AntAsm, follow the steps below:
 1. **Clone the Repository**
 
 ```bash
-git clone https://github.com/your-username/AntAsm.git
+git clone https://github.com/ZbrDeev/AntAsm.git
 cd AntAsm
 ```
 
